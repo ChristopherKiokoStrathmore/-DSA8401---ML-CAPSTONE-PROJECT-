@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TABULAR = (".xlsx", ".xlsm", ".csv", ".parquet")
+ARTEFACTS = (".joblib", ".pt", ".bin", ".safetensors", ".pkl")
 
 
 def test_no_tabular_files_tracked_outside_sample() -> None:
@@ -13,14 +14,24 @@ def test_no_tabular_files_tracked_outside_sample() -> None:
     for path in tracked:
         if path.startswith("data/sample/"):
             continue
-        if path.lower().endswith(TABULAR):
+        if path.lower().endswith(TABULAR) or path.lower().endswith(ARTEFACTS):
             bad.append(path)
     assert bad == []
 
 
 def test_gitignore_blocks_private_data_and_build_artifacts() -> None:
     text = (ROOT / ".gitignore").read_text(encoding="utf-8")
-    for token in ("data/private/", ".env*", "__pycache__/", "node_modules/", ".next/"):
+    for token in (
+        "data/private/",
+        ".env*",
+        "__pycache__/",
+        "node_modules/",
+        ".next/",
+        "artifacts/tfidf/",
+        "*.joblib",
+        "*.pt",
+        "!artifacts/transformer/weights.sha256",
+    ):
         assert token in text
 
 

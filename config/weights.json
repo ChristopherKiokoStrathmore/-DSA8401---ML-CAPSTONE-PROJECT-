@@ -1,0 +1,5 @@
+{
+  "url": "https://drive.google.com/file/d/PLACEHOLDER/view?usp=sharing",
+  "sha256_file": "artifacts/transformer/weights.sha256",
+  "out_dir": "artifacts/transformer"
+}

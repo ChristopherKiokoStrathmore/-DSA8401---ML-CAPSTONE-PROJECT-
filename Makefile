@@ -2,7 +2,9 @@ PYTHON ?= python3
 VENV ?= .venv
 BIN := $(VENV)/bin
 
-.PHONY: install lint test smoke data labels
+.PHONY: install lint test smoke data labels serve-smoke
+
+SERVE_PORT ?= 8765
 
 install:
 	$(PYTHON) -m venv $(VENV)
@@ -10,8 +12,8 @@ install:
 	$(BIN)/pip install -e ".[dev]"
 
 lint:
-	$(BIN)/ruff check src tests
-	$(BIN)/ruff format --check src tests
+	$(BIN)/ruff check src tests scripts
+	$(BIN)/ruff format --check src tests scripts
 
 test:
 	$(BIN)/pytest
@@ -43,3 +45,6 @@ labels:
 	$(BIN)/python -m capstone.agreement --labels "$(LABELS)" \
 		--out data/private/agreement.json --kind data
 	$(BIN)/python -m capstone.leakage --manifests data/private/manifests
+
+serve-smoke:
+	SERVE_PORT=$(SERVE_PORT) BIN=$(BIN) bash scripts/serve_smoke.sh

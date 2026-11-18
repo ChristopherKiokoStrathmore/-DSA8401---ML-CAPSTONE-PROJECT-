@@ -13,17 +13,24 @@ dependencies = [
     "openpyxl==3.1.5",
     "pandas==2.2.3",
     "pyarrow==18.1.0",
+    "fastapi==0.163.2",
+    "gdown==6.5.1",
+    "joblib==1.6.0",
+    "scikit-learn==1.9.1",
+    "uvicorn==0.54.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest==8.3.4",
     "ruff==0.8.6",
+    "httpx==0.28.1",
 ]
 
 [project.scripts]
 prepare-data = "capstone.prepare_data:main"
 generate-sample = "capstone.generate_sample:main"
+download-weights = "capstone.weights:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -31,7 +38,7 @@ where = ["src"]
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-src = ["src", "tests"]
+src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

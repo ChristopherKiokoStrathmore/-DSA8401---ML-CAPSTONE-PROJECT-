@@ -1,6 +1,6 @@
 # DSA 8401 capstone — Airtel Kenya message pipeline
 
-Multi-head classification of Airtel Kenya customer messages: 10 issue classes, binary sentiment (`negative` / `not_negative`), and urgency (`low` / `medium` / `emergency`). Later modelling is AfroXLMR-base with the bottom 8 of 12 layers frozen and a CORN urgency head. This repository currently contains Phase 1 (the workbook pipeline) and Phase 2 (labels and splits).
+Multi-head classification of Airtel Kenya customer messages: 10 issue classes, binary sentiment (`negative` / `not_negative`), and urgency (`low` / `medium` / `emergency`). Later modelling is AfroXLMR-base with the bottom 8 of 12 layers frozen and a CORN urgency head. This repository contains Phase 1 (the workbook pipeline), Phase 2 (labels and splits), and Phase 5 (the serving API). Phase 3 writes the model artefacts this API loads.
 
 The real workbook and the real label files are not in git. They stay in `data/private/` on a machine that has clearance. `data/sample/` is fictional and was produced with seed 42.
 
@@ -14,6 +14,10 @@ src/capstone/labels.py         the seven label filenames and their columns
 src/capstone/splits.py         grouped splits, gold removal, manifests
 src/capstone/agreement.py      hand vs platform sentiment agreement
 src/capstone/leakage.py        test vs train/val duplicate check
+src/capstone/serving/          FastAPI app: /health, /predict, /predict/batch, /predict_batch
+src/capstone/weights.py        AfroXLMR download and SHA-256 check
+scripts/download_weights.py    CLI for that download
+scripts/serve_smoke.sh         train the TF-IDF fixture, curl /health and /predict
 data/sample/messages.csv       synthetic workbook
 data/sample/labels/            synthetic label files, already masked
 docs/label_rubric.md           class names, provenance, agreement
@@ -30,7 +34,68 @@ make install
 make lint
 make test
 make smoke
+make serve-smoke
 ```
+
+`make serve-smoke` trains a TF-IDF fixture from `data/sample`, starts the API, and curls `/health` and `/predict`. Those predictions are a harness check, not a quality result.
+
+## Serving
+
+The API is what the [MULTI-HEAD](https://github.com/ChristopherKiokoStrathmore/MULTI-HEAD-) Next.js app calls. It does not need a change to talk to this service.
+
+| Method | Path | Body | Response |
+| --- | --- | --- | --- |
+| GET | `/health` | | `status`, `model_loaded`, `device`, `checkpoint`, `issue_classes`, `sent_classes`, `urgency_labels`, plus `backend` and `error` |
+| POST | `/predict` | `{"text": "..."}` | one prediction |
+| POST | `/predict_batch` | `{"texts": ["..."]}` | a JSON array, one prediction per input, in order |
+| POST | `/predict/batch` | same as `/predict_batch` | same array |
+
+`/health` is HTTP 200 with `"status": "ok"` and `"model_loaded": true` when a model is loaded. Otherwise it is HTTP 503 and `error` says why. `/predict` and both batch paths return 503 in that same case.
+
+A prediction is the object in `lib/types.ts`:
+
+```json
+{
+  "issue": "Network_Issues",
+  "sentiment": "negative",
+  "urgency": "medium",
+  "urgency_score": 0.42,
+  "confidence": {"issue": 0.81, "sentiment": 0.77}
+}
+```
+
+`urgency_score` is the probability-weighted ordinal (`low` 0, `medium` 0.5, `emergency` 1). Confidence values are probabilities in 0–1.
+
+Every input goes through `mask_pii` before the model sees it. The same function masks training text. Logs record the character count and the batch size, not the message. A text longer than `MAX_TEXT_CHARS` (default 4000) or a batch larger than `MAX_BATCH_SIZE` (default 32) is HTTP 422, and the error body does not echo the message. The Next.js batch client sends 20 rows at a time, under that cap.
+
+`MODEL_BACKEND` is `tfidf` (the default) or `transformer`.
+
+* TF-IDF reads `artifacts/tfidf/{issue,sentiment,urgency}.joblib` (scikit-learn pipelines with `predict_proba`) and `artifacts/tfidf/labels.json`. Urgency in that file is `low`, `medium`, `emergency`, in that order.
+* Transformer calls `capstone.models.multitask.load_for_inference(directory)`. The import is lazy. Each `predict` row is `issue` (`label`, `probs`), `sentiment` (`label`, `prob`), and `urgency` (`level`, `probs`, `emergency`). A missing module or a failed load stays up: `/health` describes it and `/predict` returns 503.
+
+CORS allows `https://multi-head.vercel.app`, any `https://*.vercel.app` origin, and `http://localhost` / `http://127.0.0.1` on any port. Methods are GET, POST, and OPTIONS. The allowed request header is `Content-Type`.
+
+### Weights
+
+AfroXLMR files are not in git. `config/weights.json` holds a placeholder Google Drive URL, and `artifacts/transformer/weights.sha256` holds a placeholder digest.
+
+```bash
+AFROXLMR_WEIGHTS_URL='https://drive.google.com/file/d/<id>/view' python scripts/download_weights.py
+```
+
+`WEIGHTS_URL` is accepted as an alias. A Drive link is downloaded with gdown. Any other URL is downloaded with urllib. The script checks the file against `weights.sha256` and exits 1 on a mismatch, after deleting the partial download. The placeholder URL is refused before a download.
+
+### Docker
+
+```bash
+docker compose up --build
+curl -s http://127.0.0.1:8000/health
+curl -s -X POST http://127.0.0.1:8000/predict \
+  -H 'content-type: application/json' \
+  -d '{"text":"My line has been down since morning, please help"}'
+```
+
+The image is Python slim, installs the CPU torch wheel (`torch==2.15.0+cpu`), and runs uvicorn as uid 10001. `MODEL_BACKEND` defaults to `tfidf`. The `artifacts` volume holds the pipelines and any downloaded weights. The image already contains the synthetic TF-IDF fixture, so the first start can answer `/predict` before Phase 3 artefacts are mounted. `HEALTHCHECK` calls `/health`.
 
 `make data DATA=/path/to/workbook.xlsx` runs the workbook pipeline on a real export and writes `data/private/messages.parquet`.
 

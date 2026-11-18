@@ -1,0 +1,17 @@
+# Smoke encoder. Random 4-layer XLM-R, one optimiser step, no download.
+# Not a result and not the T4 configuration.
+seed: 42
+model_name: tiny-random-xlm-roberta
+tiny: true
+max_length: 64
+batch_size: 8
+learning_rate: 2.0e-5
+weight_decay: 0.0
+epochs: 1
+patience: 1
+warmup_ratio: 0.0
+freeze_embeddings: true
+freeze_bottom_layers: 2
+fp16: false
+grad_clip: 1.0
+max_steps: 1

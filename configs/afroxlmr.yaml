@@ -1,0 +1,19 @@
+# AfroXLMR-base multi-task run, one seed.
+# Sized for a single Colab T4 in fp16: short messages, batch 16, max length 128,
+# at most 6 epochs with early stopping. Budget about 60-90 minutes on the real
+# label split (issue/sentiment 1,500 and urgency 868, after the grouped split).
+seed: 42
+model_name: Davlan/afro-xlmr-base
+tiny: false
+max_length: 128
+batch_size: 16
+learning_rate: 2.0e-5
+weight_decay: 0.01
+epochs: 6
+patience: 2
+warmup_ratio: 0.1
+freeze_embeddings: true
+freeze_bottom_layers: 8
+fp16: true
+grad_clip: 1.0
+max_steps: null

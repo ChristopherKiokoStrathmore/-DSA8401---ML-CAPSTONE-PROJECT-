@@ -20,7 +20,14 @@ def test_no_tabular_files_tracked_outside_sample() -> None:
 
 def test_gitignore_blocks_private_data_and_build_artifacts() -> None:
     text = (ROOT / ".gitignore").read_text(encoding="utf-8")
-    for token in ("data/private/", ".env*", "__pycache__/", "node_modules/", ".next/"):
+    for token in (
+        "data/private/",
+        "artifacts/",
+        ".env*",
+        "__pycache__/",
+        "node_modules/",
+        ".next/",
+    ):
         assert token in text
 
 

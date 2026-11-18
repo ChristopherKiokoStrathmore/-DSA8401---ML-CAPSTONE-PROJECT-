@@ -1,0 +1,23 @@
+# real customer data and generated audits
+data/private/
+reports/**
+!reports/.gitkeep
+
+# secrets and environments
+.env*
+
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# node (not used in this phase; never commit these)
+node_modules/
+.next/

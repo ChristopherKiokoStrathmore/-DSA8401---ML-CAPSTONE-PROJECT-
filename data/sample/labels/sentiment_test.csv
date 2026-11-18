@@ -1,0 +1,33 @@
+row_id,message,your_sentiment
+5000,annotated-00 s0z0 s0z1 s0z2 s0z3 s0z4 s0z5 s0z6 s0z7 s0z8 s0z9 end 7,negative
+5001,annotated-01 s1z0 s1z1 s1z2 s1z3 s1z4 s1z5 s1z6 s1z7 s1z8 s1z9 end 48,not_negative
+5002,annotated-02 s2z0 s2z1 s2z2 s2z3 s2z4 s2z5 s2z6 s2z7 s2z8 s2z9 end 89,negative
+5003,annotated-03 s3z0 s3z1 s3z2 s3z3 s3z4 s3z5 s3z6 s3z7 s3z8 s3z9 end 130,not_negative
+5004,annotated-04 s4z0 s4z1 s4z2 s4z3 s4z4 s4z5 s4z6 s4z7 s4z8 s4z9 end 171,negative
+5005,annotated-05 s5z0 s5z1 s5z2 s5z3 s5z4 s5z5 s5z6 s5z7 s5z8 s5z9 end 212,not_negative
+5006,annotated-06 s6z0 s6z1 s6z2 s6z3 s6z4 s6z5 s6z6 s6z7 s6z8 s6z9 end 253,negative
+5007,annotated-07 s7z0 s7z1 s7z2 s7z3 s7z4 s7z5 s7z6 s7z7 s7z8 s7z9 end 294,not_negative
+5008,annotated-08 s8z0 s8z1 s8z2 s8z3 s8z4 s8z5 s8z6 s8z7 s8z8 s8z9 end 335,negative
+5009,annotated-09 s9z0 s9z1 s9z2 s9z3 s9z4 s9z5 s9z6 s9z7 s9z8 s9z9 end 376,not_negative
+5010,annotated-10 s10z0 s10z1 s10z2 s10z3 s10z4 s10z5 s10z6 s10z7 s10z8 s10z9 end 417,negative
+5011,annotated-11 s11z0 s11z1 s11z2 s11z3 s11z4 s11z5 s11z6 s11z7 s11z8 s11z9 end 458,not_negative
+5012,annotated-12 s12z0 s12z1 s12z2 s12z3 s12z4 s12z5 s12z6 s12z7 s12z8 s12z9 end 499,negative
+5013,annotated-13 s13z0 s13z1 s13z2 s13z3 s13z4 s13z5 s13z6 s13z7 s13z8 s13z9 end 540,not_negative
+5014,annotated-14 s14z0 s14z1 s14z2 s14z3 s14z4 s14z5 s14z6 s14z7 s14z8 s14z9 end 581,negative
+5015,annotated-15 s15z0 s15z1 s15z2 s15z3 s15z4 s15z5 s15z6 s15z7 s15z8 s15z9 end 622,not_negative
+5016,annotated-16 s16z0 s16z1 s16z2 s16z3 s16z4 s16z5 s16z6 s16z7 s16z8 s16z9 end 663,negative
+5017,annotated-17 s17z0 s17z1 s17z2 s17z3 s17z4 s17z5 s17z6 s17z7 s17z8 s17z9 end 704,not_negative
+5018,annotated-18 s18z0 s18z1 s18z2 s18z3 s18z4 s18z5 s18z6 s18z7 s18z8 s18z9 end 745,negative
+5019,annotated-19 s19z0 s19z1 s19z2 s19z3 s19z4 s19z5 s19z6 s19z7 s19z8 s19z9 end 786,not_negative
+5020,annotated-20 s20z0 s20z1 s20z2 s20z3 s20z4 s20z5 s20z6 s20z7 s20z8 s20z9 end 827,negative
+5021,annotated-21 s21z0 s21z1 s21z2 s21z3 s21z4 s21z5 s21z6 s21z7 s21z8 s21z9 end 868,not_negative
+5022,annotated-22 s22z0 s22z1 s22z2 s22z3 s22z4 s22z5 s22z6 s22z7 s22z8 s22z9 end 909,negative
+5023,annotated-23 s23z0 s23z1 s23z2 s23z3 s23z4 s23z5 s23z6 s23z7 s23z8 s23z9 end 950,not_negative
+5024,annotated-24 s24z0 s24z1 s24z2 s24z3 s24z4 s24z5 s24z6 s24z7 s24z8 s24z9 end 991,negative
+5025,annotated-25 s25z0 s25z1 s25z2 s25z3 s25z4 s25z5 s25z6 s25z7 s25z8 s25z9 end 1032,not_negative
+5026,annotated-26 s26z0 s26z1 s26z2 s26z3 s26z4 s26z5 s26z6 s26z7 s26z8 s26z9 end 1073,negative
+5027,annotated-27 s27z0 s27z1 s27z2 s27z3 s27z4 s27z5 s27z6 s27z7 s27z8 s27z9 end 1114,not_negative
+5028,annotated-28 s28z0 s28z1 s28z2 s28z3 s28z4 s28z5 s28z6 s28z7 s28z8 s28z9 end 1155,negative
+5029,annotated-29 s29z0 s29z1 s29z2 s29z3 s29z4 s29z5 s29z6 s29z7 s29z8 s29z9 end 1196,not_negative
+5099,my line has been down since morning please help,negative
+5100,the home router shows no 5g light at night and calls fail please,negative

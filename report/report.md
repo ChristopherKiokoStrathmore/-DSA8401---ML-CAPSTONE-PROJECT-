@@ -53,7 +53,7 @@ Every rung uses the same splits. Nothing is chosen on the test set.
 1. Majority class, fit on train.
 2. Keyword heuristic, with emergency, medium, and issue cues. Unmatched text falls back to the training majority.
 3. TF-IDF, word bigrams and character 3–5 grams, then logistic regression with balanced class weights. `C` is chosen on validation only, then the pipeline is refit on train.
-4. AfroXLMR-base, one seed (42). Embeddings and the bottom 8 of 12 layers are frozen. The top 4 layers and three heads train: issue softmax, sentiment softmax, urgency CORN. Masked loss, class weights, and urgency row weights. Early stopping uses validation macro-F1 and quadratic weighted kappa. The checkpoint, config, tokenizer, and SHA-256 go to `artifacts/afroxlmr/`.
+4. AfroXLMR-base, one seed (42). Embeddings and the bottom 8 of 12 layers are frozen. The top 4 layers and three heads train: issue softmax, sentiment softmax, urgency CORN. Masked loss, class weights, and urgency row weights. Early stopping uses validation macro-F1 and quadratic weighted kappa. The Colab T4 run used all 6 planned epochs (1,140 steps, about 25 minutes) and did not stop early. Epoch 6 validation: issue macro-F1 0.5819, sentiment macro-F1 0.8935, urgency QWK 0.5817 (`reports/afroxlmr_run/curves.json`). The checkpoint is `model.pt`, 1,112,288,438 bytes, SHA-256 `778246a31841ac554fbf574cfc42cc9579981b67fb85a8eb1814dbb689ea9eb6`.
 
 Base rather than large is a size decision. The proposal froze 8 of 24 layers. Freezing 8 of 12 keeps that one-third trainable and fits one Colab T4. The deviation is recorded in `docs/technique_justification.md`.
 
@@ -65,16 +65,20 @@ The emergency flag is a threshold on P(emergency). It is chosen on the urgency v
 
 ## Results
 
-The tables below are the real TF-IDF run (`evaluate.py` on the real test manifests). They are not the smoke harness. AfroXLMR cells are empty until the T4 `results.json` is copied in. Do not fill them from `make smoke`.
+The tables are the real test-split evaluation (`reports/results.json`, `kind: data`). They are not the smoke harness. AfroXLMR figures are the Colab T4 checkpoint, seed 42. Rounded to three decimals the same way `evaluate.py` writes `results.md`.
 
-Emergency threshold on validation (real data):
+Validation curves (`reports/afroxlmr_run/curves.json`):
+
+![AfroXLMR validation curves on the Colab T4 run](../reports/figures/learning_curves.png)
+
+Emergency threshold on validation (real data). AfroXLMR's threshold is 0.50 (`reports/afroxlmr_run/threshold.json`): validation emergency recall 0.810, false-emergency rate 0.179, under the 0.20 cap.
 
 | model | threshold | val recall | val false-emergency rate | met cap |
 | --- | ---: | ---: | ---: | --- |
 | majority | 0.95 | 0.000 | 0.000 | yes |
 | keyword | 0.80 | 0.095 | 0.026 | yes |
 | tfidf | 0.45 | 0.714 | 0.154 | yes |
-| afroxlmr | <<TRANSFORMER: from results.json>> | <<TRANSFORMER: from results.json>> | <<TRANSFORMER: from results.json>> | <<TRANSFORMER: from results.json>> |
+| afroxlmr | 0.50 | 0.810 | 0.179 | yes |
 
 ### Issue (n = 224)
 
@@ -85,11 +89,15 @@ Gold support: Airtel_Money_Reversal 4, Airtel_Money_Transfer 19, App_Rewards 14,
 | majority | 0.041 | [0.033, 0.048] |
 | keyword | 0.411 | [0.318, 0.474] |
 | tfidf | 0.636 | [0.542, 0.714] |
-| afroxlmr | <<TRANSFORMER: from results.json>> | <<TRANSFORMER: from results.json>> |
+| afroxlmr | 0.656 | [0.595, 0.707] |
 
 TF-IDF per-class F1 (support in parentheses): reversal 0.40 (4), transfer 0.74 (19), rewards 0.81 (14), general complaint 0.20 (6), data bundle 0.67 (22), network 0.81 (41), non-actionable 0.78 (57), product enquiry 0.47 (20), router/Wi-Fi 0.75 (21), SIM/line 0.73 (20).
 
-Paired macro-F1 minus TF-IDF: majority −0.596 [−0.673, −0.501]; keyword −0.226 [−0.360, −0.103]. AfroXLMR paired difference: <<TRANSFORMER: from results.json>>.
+AfroXLMR per-class F1: reversal 0.00 (4), transfer 0.76 (19), rewards 0.88 (14), general complaint 0.29 (6), data bundle 0.83 (22), network 0.89 (41), non-actionable 0.81 (57), product enquiry 0.65 (20), router/Wi-Fi 0.79 (21), SIM/line 0.67 (20). On Airtel_Money_Reversal (n = 4) AfroXLMR scores F1 0.00, where TF-IDF scores 0.40.
+
+![Issue confusion matrix, AfroXLMR](../reports/figures/issue_afroxlmr.png)
+
+Paired macro-F1 minus TF-IDF: majority −0.596 [−0.673, −0.501]; keyword −0.226 [−0.360, −0.103]; AfroXLMR +0.020 [−0.062, 0.117].
 
 ### Sentiment (n = 150)
 
@@ -100,11 +108,13 @@ Gold support: negative 93, not_negative 57.
 | majority | 0.383 | [0.353, 0.409] |
 | keyword | 0.383 | [0.353, 0.409] |
 | tfidf | 0.758 | [0.685, 0.825] |
-| afroxlmr | <<TRANSFORMER: from results.json>> | <<TRANSFORMER: from results.json>> |
+| afroxlmr | 0.800 | [0.727, 0.863] |
 
-TF-IDF per-class F1: negative 0.80 (93), not_negative 0.71 (57). Majority and the keyword rule both score 0.77 on negative and 0.00 on not_negative, which is why their macro-F1 matches.
+TF-IDF per-class F1: negative 0.80 (93), not_negative 0.71 (57). AfroXLMR: negative 0.84 (93), not_negative 0.76 (57). Majority and the keyword rule both score 0.77 on negative and 0.00 on not_negative, which is why their macro-F1 matches.
 
-Paired macro-F1 minus TF-IDF: majority −0.375 [−0.454, −0.291]; keyword −0.375 [−0.454, −0.291]. AfroXLMR paired difference: <<TRANSFORMER: from results.json>>.
+![Sentiment confusion matrix, AfroXLMR](../reports/figures/sentiment_afroxlmr.png)
+
+Paired macro-F1 minus TF-IDF: majority −0.375 [−0.454, −0.291]; keyword −0.375 [−0.454, −0.291]; AfroXLMR +0.043 [−0.017, 0.099].
 
 ### Urgency (n = 120)
 
@@ -115,13 +125,17 @@ Gold support: low 17, medium 52, emergency 51 (69 non-emergency).
 | majority | 0.199 | [0.170, 0.227] | 0.000 | 0.000 | 0.000 |
 | keyword | 0.215 | [0.155, 0.272] | 0.044 | 0.000 | 0.043 |
 | tfidf | 0.633 | [0.526, 0.723] | 0.554 | 0.667 | 0.174 |
-| afroxlmr | <<TRANSFORMER: from results.json>> | <<TRANSFORMER: from results.json>> | <<TRANSFORMER: from results.json>> | <<TRANSFORMER: from results.json>> | <<TRANSFORMER: from results.json>> |
+| afroxlmr | 0.687 | [0.589, 0.770] | 0.687 | 0.804 | 0.145 |
 
-TF-IDF per-class F1: low 0.48 (17), medium 0.67 (52), emergency 0.74 (51).
+TF-IDF per-class F1: low 0.48 (17), medium 0.67 (52), emergency 0.74 (51). AfroXLMR: low 0.59 (17), medium 0.67 (52), emergency 0.80 (51).
 
-Paired macro-F1 minus TF-IDF: majority −0.434 [−0.536, −0.324]; keyword −0.418 [−0.511, −0.307]. AfroXLMR paired difference: <<TRANSFORMER: from results.json>>.
+![Urgency confusion matrix, AfroXLMR](../reports/figures/urgency_afroxlmr.png)
 
-Reading the real TF-IDF numbers only: it is well above the majority and keyword baselines on every head. The two smallest issue classes, reversal (n = 4) and general complaint (n = 6), are where the F1 is weakest. Urgency quadratic weighted kappa is 0.554, and at the validation threshold the test emergency recall is 0.667 with a false-emergency rate of 0.174, under the 0.20 cap.
+Paired macro-F1 minus TF-IDF: majority −0.434 [−0.536, −0.324]; keyword −0.418 [−0.511, −0.307]; AfroXLMR +0.055 [−0.020, 0.135].
+
+AfroXLMR's point estimate is above TF-IDF on all three heads. The paired bootstrap intervals on those macro-F1 differences all include zero (issue +0.020 [−0.062, 0.117], sentiment +0.043 [−0.017, 0.099], urgency +0.055 [−0.020, 0.135]), so the test sizes do not show a significant macro-F1 gain. Two urgency contrasts do separate: paired QWK +0.133 [0.002, 0.272] and paired emergency recall +0.137 [0.036, 0.259]. At the validation threshold, test emergency recall is 0.804 against TF-IDF 0.667, and the false-emergency rate is 0.145 against 0.174.
+
+TF-IDF and AfroXLMR are both well above the majority and keyword baselines on every head. The two smallest issue classes, reversal (n = 4) and general complaint (n = 6), stay weak. Reversal is the class where the transformer loses to TF-IDF.
 
 ## Limitations
 
@@ -130,7 +144,7 @@ Reading the real TF-IDF numbers only: it is well above the majority and keyword 
 - Two issue classes have support 4 and 6. A single error changes their F1 a lot. The bootstrap intervals on issue macro-F1 are wide for that reason.
 - 688 urgency training rows are silver labels from Groq, not Chris's gold. They are weighted down, but they are still in the training loss.
 - The encoder is AfroXLMR-base, not large. The frozen fraction matches the proposal; the capacity does not.
-- AfroXLMR test numbers are not in this file yet. The placeholders above stay until the T4 `results.json` is copied. Do not substitute smoke metrics.
+- The T4 point estimates favour AfroXLMR, and the macro-F1 intervals still include zero. A second seed or a larger test would be needed before calling the gain significant.
 
 ## Real-world relevance
 

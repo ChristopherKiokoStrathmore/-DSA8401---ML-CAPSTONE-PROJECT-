@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from capstone.weights import (
+    ShaEntry,
     is_google_drive_url,
     is_placeholder_url,
     main,
@@ -27,7 +28,25 @@ def test_google_drive_urls() -> None:
     assert is_google_drive_url("https://docs.google.com/uc?export=download&id=abc")
     assert not is_google_drive_url("https://example.com/afroxlmr.pt")
     assert is_placeholder_url("https://drive.google.com/file/d/PLACEHOLDER/view")
+    assert is_placeholder_url("TODO_DRIVE_URL")
     assert not is_placeholder_url("https://drive.google.com/file/d/abc123/view")
+
+
+def test_committed_weights_record_the_t4_digest() -> None:
+    root = Path(__file__).resolve().parents[1]
+    config = json.loads((root / "config" / "weights.json").read_text(encoding="utf-8"))
+    assert config["url"] == "TODO_DRIVE_URL"
+    assert is_placeholder_url(config["url"])
+    entries = parse_sha256_file(root / config["sha256_file"])
+    assert entries == [
+        ShaEntry(
+            digest="778246a31841ac554fbf574cfc42cc9579981b67fb85a8eb1814dbb689ea9eb6",
+            name="model.pt",
+        )
+    ]
+    assert config["sha256"] == entries[0].digest
+    assert config["bytes"] == 1112288438
+    assert config["filename"] == "model.pt"
 
 
 def test_placeholder_url_fails_before_download(

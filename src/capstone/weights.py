@@ -10,9 +10,10 @@ and is saved under that name. Several entries mean the download is a zip and
 each member is hashed before it is written. A mismatch deletes the partial
 download and exits 1.
 
-The committed URL and digest are placeholders. The script refuses a URL that
-still says PLACEHOLDER, and a real download that does not match the digest
-fails the same way.
+The committed digest is the Colab T4 ``model.pt`` (1,112,288,438 bytes). The
+committed URL is ``TODO_DRIVE_URL`` until the owner pastes a Drive link. The
+script refuses that URL before any download. A file that does not match the
+digest is deleted and the script exits 1.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
-_PLACEHOLDER_MARKERS = ("placeholder", "replace_me")
+_PLACEHOLDER_MARKERS = ("placeholder", "replace_me", "todo_drive_url")
 
 
 @dataclass(frozen=True)

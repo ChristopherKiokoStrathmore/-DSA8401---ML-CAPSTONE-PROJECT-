@@ -19,4 +19,4 @@ LLMs were not put in the serving path. Gemini and Groq ran offline, before train
 
 ## What is not an AI result
 
-The real TF-IDF numbers in the report were produced by `evaluate.py` on the real test manifests. The AfroXLMR rows in that report are still placeholders until `results.json` from the T4 run is copied in. Harness output from `make smoke` and `make serve-smoke` is not a result.
+The numbers in `report/report.md` and `reports/results.json` were produced by `evaluate.py` on the real test manifests, including the Colab T4 AfroXLMR checkpoint. Harness output from `make smoke` and `make serve-smoke` is not a result.

@@ -1,0 +1,1461 @@
+{
+  "banner": "Test-split evaluation. The emergency threshold was chosen on validation only. Not a training loss.",
+  "bootstrap_resamples": 1000,
+  "emergency_threshold": {
+    "by_model": {
+      "afroxlmr": {
+        "cap": 0.2,
+        "fallback_lowest_false_rate": false,
+        "meets_cap": true,
+        "rule": "On validation only: maximise emergency recall subject to false-emergency rate <= 0.20. Ties: lower false-emergency rate, then a higher threshold. If no threshold meets the cap, use the lowest false-emergency rate.",
+        "threshold": 0.5,
+        "val_emergency_recall": 0.8095238095238095,
+        "val_false_emergency_rate": 0.1794871794871795
+      },
+      "keyword": {
+        "cap": 0.2,
+        "fallback_lowest_false_rate": false,
+        "meets_cap": true,
+        "rule": "On validation only: maximise emergency recall subject to false-emergency rate <= 0.20. Ties: lower false-emergency rate, then a higher threshold. If no threshold meets the cap, use the lowest false-emergency rate.",
+        "threshold": 0.8,
+        "val_emergency_recall": 0.09523809523809523,
+        "val_false_emergency_rate": 0.02564102564102564
+      },
+      "majority": {
+        "cap": 0.2,
+        "fallback_lowest_false_rate": false,
+        "meets_cap": true,
+        "rule": "On validation only: maximise emergency recall subject to false-emergency rate <= 0.20. Ties: lower false-emergency rate, then a higher threshold. If no threshold meets the cap, use the lowest false-emergency rate.",
+        "threshold": 0.95,
+        "val_emergency_recall": 0.0,
+        "val_false_emergency_rate": 0.0
+      },
+      "tfidf": {
+        "cap": 0.2,
+        "fallback_lowest_false_rate": false,
+        "meets_cap": true,
+        "rule": "On validation only: maximise emergency recall subject to false-emergency rate <= 0.20. Ties: lower false-emergency rate, then a higher threshold. If no threshold meets the cap, use the lowest false-emergency rate.",
+        "threshold": 0.45,
+        "val_emergency_recall": 0.7142857142857143,
+        "val_false_emergency_rate": 0.15384615384615385
+      }
+    },
+    "cap": 0.2
+  },
+  "figures": [
+    "figures/issue_afroxlmr.png",
+    "figures/issue_keyword.png",
+    "figures/issue_majority.png",
+    "figures/issue_tfidf.png",
+    "figures/sentiment_afroxlmr.png",
+    "figures/sentiment_keyword.png",
+    "figures/sentiment_majority.png",
+    "figures/sentiment_tfidf.png",
+    "figures/urgency_afroxlmr.png",
+    "figures/urgency_keyword.png",
+    "figures/urgency_majority.png",
+    "figures/urgency_tfidf.png"
+  ],
+  "heads": {
+    "issue": {
+      "models": {
+        "afroxlmr": {
+          "confusion": [
+            [
+              0,
+              3,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              17,
+              0,
+              0,
+              0,
+              0,
+              1,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              11,
+              0,
+              0,
+              0,
+              1,
+              1,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              2,
+              1,
+              1,
+              2,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0,
+              19,
+              1,
+              0,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              2,
+              36,
+              1,
+              0,
+              0,
+              2
+            ],
+            [
+              0,
+              0,
+              0,
+              3,
+              0,
+              0,
+              44,
+              4,
+              3,
+              3
+            ],
+            [
+              0,
+              4,
+              0,
+              1,
+              0,
+              0,
+              0,
+              13,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              1,
+              2,
+              0,
+              1,
+              17,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              2,
+              0,
+              0,
+              2,
+              0,
+              1,
+              14
+            ]
+          ],
+          "macro_f1": {
+            "ci95": [
+              0.5951877873052503,
+              0.707345579446268
+            ],
+            "estimate": 0.6558424842580555,
+            "resamples_used": 1000
+          },
+          "n": 224,
+          "per_class": {
+            "Airtel_Money_Reversal": {
+              "f1": 0.0,
+              "n": 4,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "Airtel_Money_Transfer": {
+              "f1": 0.7555555555555555,
+              "n": 19,
+              "precision": 0.6538461538461539,
+              "recall": 0.8947368421052632
+            },
+            "App_Rewards": {
+              "f1": 0.88,
+              "n": 14,
+              "precision": 1.0,
+              "recall": 0.7857142857142857
+            },
+            "Complaint_General": {
+              "f1": 0.2857142857142857,
+              "n": 6,
+              "precision": 0.25,
+              "recall": 0.3333333333333333
+            },
+            "Data_Bundle_Problems": {
+              "f1": 0.8260869565217391,
+              "n": 22,
+              "precision": 0.7916666666666666,
+              "recall": 0.8636363636363636
+            },
+            "Network_Issues": {
+              "f1": 0.8888888888888888,
+              "n": 41,
+              "precision": 0.9,
+              "recall": 0.8780487804878049
+            },
+            "Non_Actionable": {
+              "f1": 0.8148148148148148,
+              "n": 57,
+              "precision": 0.8627450980392157,
+              "recall": 0.7719298245614035
+            },
+            "Product_Enquiry": {
+              "f1": 0.65,
+              "n": 20,
+              "precision": 0.65,
+              "recall": 0.65
+            },
+            "Router_WiFi_5G": {
+              "f1": 0.7906976744186046,
+              "n": 21,
+              "precision": 0.7727272727272727,
+              "recall": 0.8095238095238095
+            },
+            "SIM_Line_Services": {
+              "f1": 0.6666666666666666,
+              "n": 20,
+              "precision": 0.6363636363636364,
+              "recall": 0.7
+            }
+          }
+        },
+        "keyword": {
+          "confusion": [
+            [
+              2,
+              0,
+              0,
+              0,
+              0,
+              0,
+              2,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              4,
+              0,
+              0,
+              1,
+              0,
+              11,
+              1,
+              0,
+              2
+            ],
+            [
+              0,
+              0,
+              2,
+              0,
+              4,
+              0,
+              7,
+              0,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1,
+              0,
+              1,
+              0,
+              3,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              2,
+              1,
+              1,
+              15,
+              0,
+              3,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              2,
+              0,
+              5,
+              5,
+              21,
+              8,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              10,
+              1,
+              0,
+              0,
+              2,
+              41,
+              0,
+              1,
+              2
+            ],
+            [
+              0,
+              1,
+              0,
+              2,
+              3,
+              0,
+              11,
+              1,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              2,
+              4,
+              0,
+              15,
+              0
+            ],
+            [
+              0,
+              3,
+              0,
+              2,
+              0,
+              2,
+              6,
+              0,
+              0,
+              7
+            ]
+          ],
+          "macro_f1": {
+            "ci95": [
+              0.31812836024376645,
+              0.47381330317150294
+            ],
+            "estimate": 0.4107139098431668,
+            "resamples_used": 1000
+          },
+          "n": 224,
+          "per_class": {
+            "Airtel_Money_Reversal": {
+              "f1": 0.6666666666666666,
+              "n": 4,
+              "precision": 1.0,
+              "recall": 0.5
+            },
+            "Airtel_Money_Transfer": {
+              "f1": 0.19047619047619047,
+              "n": 19,
+              "precision": 0.17391304347826086,
+              "recall": 0.21052631578947367
+            },
+            "App_Rewards": {
+              "f1": 0.21052631578947367,
+              "n": 14,
+              "precision": 0.4,
+              "recall": 0.14285714285714285
+            },
+            "Complaint_General": {
+              "f1": 0.0,
+              "n": 6,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "Data_Bundle_Problems": {
+              "f1": 0.5882352941176471,
+              "n": 22,
+              "precision": 0.5172413793103449,
+              "recall": 0.6818181818181818
+            },
+            "Network_Issues": {
+              "f1": 0.6176470588235294,
+              "n": 41,
+              "precision": 0.7777777777777778,
+              "recall": 0.5121951219512195
+            },
+            "Non_Actionable": {
+              "f1": 0.5359477124183006,
+              "n": 57,
+              "precision": 0.4270833333333333,
+              "recall": 0.7192982456140351
+            },
+            "Product_Enquiry": {
+              "f1": 0.09090909090909091,
+              "n": 20,
+              "precision": 0.5,
+              "recall": 0.05
+            },
+            "Router_WiFi_5G": {
+              "f1": 0.7692307692307693,
+              "n": 21,
+              "precision": 0.8333333333333334,
+              "recall": 0.7142857142857143
+            },
+            "SIM_Line_Services": {
+              "f1": 0.4375,
+              "n": 20,
+              "precision": 0.5833333333333334,
+              "recall": 0.35
+            }
+          }
+        },
+        "majority": {
+          "confusion": [
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              4,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              19,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              14,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              6,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              22,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              41,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              57,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              20,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              21,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              20,
+              0,
+              0,
+              0
+            ]
+          ],
+          "macro_f1": {
+            "ci95": [
+              0.03283582089552239,
+              0.047619047619047616
+            ],
+            "estimate": 0.040569395017793594,
+            "resamples_used": 1000
+          },
+          "n": 224,
+          "per_class": {
+            "Airtel_Money_Reversal": {
+              "f1": 0.0,
+              "n": 4,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "Airtel_Money_Transfer": {
+              "f1": 0.0,
+              "n": 19,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "App_Rewards": {
+              "f1": 0.0,
+              "n": 14,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "Complaint_General": {
+              "f1": 0.0,
+              "n": 6,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "Data_Bundle_Problems": {
+              "f1": 0.0,
+              "n": 22,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "Network_Issues": {
+              "f1": 0.0,
+              "n": 41,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "Non_Actionable": {
+              "f1": 0.40569395017793597,
+              "n": 57,
+              "precision": 0.2544642857142857,
+              "recall": 1.0
+            },
+            "Product_Enquiry": {
+              "f1": 0.0,
+              "n": 20,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "Router_WiFi_5G": {
+              "f1": 0.0,
+              "n": 21,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "SIM_Line_Services": {
+              "f1": 0.0,
+              "n": 20,
+              "precision": 0.0,
+              "recall": 0.0
+            }
+          }
+        },
+        "tfidf": {
+          "confusion": [
+            [
+              1,
+              2,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              16,
+              0,
+              0,
+              1,
+              0,
+              2,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              11,
+              0,
+              0,
+              0,
+              1,
+              1,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              1,
+              0,
+              2,
+              3,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              1,
+              0,
+              0,
+              16,
+              2,
+              1,
+              2,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              4,
+              34,
+              2,
+              0,
+              0,
+              1
+            ],
+            [
+              0,
+              0,
+              2,
+              1,
+              0,
+              4,
+              45,
+              1,
+              2,
+              2
+            ],
+            [
+              0,
+              5,
+              0,
+              1,
+              3,
+              0,
+              0,
+              8,
+              2,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              0,
+              0,
+              1,
+              2,
+              2,
+              15,
+              1
+            ],
+            [
+              0,
+              0,
+              0,
+              1,
+              1,
+              0,
+              3,
+              0,
+              0,
+              15
+            ]
+          ],
+          "macro_f1": {
+            "ci95": [
+              0.5421243237331649,
+              0.7143767647612208
+            ],
+            "estimate": 0.6363348958849724,
+            "resamples_used": 1000
+          },
+          "n": 224,
+          "per_class": {
+            "Airtel_Money_Reversal": {
+              "f1": 0.4,
+              "n": 4,
+              "precision": 1.0,
+              "recall": 0.25
+            },
+            "Airtel_Money_Transfer": {
+              "f1": 0.7441860465116279,
+              "n": 19,
+              "precision": 0.6666666666666666,
+              "recall": 0.8421052631578947
+            },
+            "App_Rewards": {
+              "f1": 0.8148148148148148,
+              "n": 14,
+              "precision": 0.8461538461538461,
+              "recall": 0.7857142857142857
+            },
+            "Complaint_General": {
+              "f1": 0.2,
+              "n": 6,
+              "precision": 0.25,
+              "recall": 0.16666666666666666
+            },
+            "Data_Bundle_Problems": {
+              "f1": 0.6666666666666666,
+              "n": 22,
+              "precision": 0.6153846153846154,
+              "recall": 0.7272727272727273
+            },
+            "Network_Issues": {
+              "f1": 0.8095238095238095,
+              "n": 41,
+              "precision": 0.7906976744186046,
+              "recall": 0.8292682926829268
+            },
+            "Non_Actionable": {
+              "f1": 0.7758620689655172,
+              "n": 57,
+              "precision": 0.7627118644067796,
+              "recall": 0.7894736842105263
+            },
+            "Product_Enquiry": {
+              "f1": 0.47058823529411764,
+              "n": 20,
+              "precision": 0.5714285714285714,
+              "recall": 0.4
+            },
+            "Router_WiFi_5G": {
+              "f1": 0.75,
+              "n": 21,
+              "precision": 0.7894736842105263,
+              "recall": 0.7142857142857143
+            },
+            "SIM_Line_Services": {
+              "f1": 0.7317073170731707,
+              "n": 20,
+              "precision": 0.7142857142857143,
+              "recall": 0.75
+            }
+          }
+        }
+      },
+      "n": 224,
+      "paired_vs_tfidf": {
+        "afroxlmr": {
+          "macro_f1_diff": {
+            "ci95": [
+              -0.06243699591043875,
+              0.11730689187102632
+            ],
+            "estimate": 0.019507588373083085,
+            "resamples_used": 1000
+          }
+        },
+        "keyword": {
+          "macro_f1_diff": {
+            "ci95": [
+              -0.360060885381393,
+              -0.10341300547467885
+            ],
+            "estimate": -0.22562098604180558,
+            "resamples_used": 1000
+          }
+        },
+        "majority": {
+          "macro_f1_diff": {
+            "ci95": [
+              -0.6731252560470041,
+              -0.5009653554447786
+            ],
+            "estimate": -0.5957655008671788,
+            "resamples_used": 1000
+          }
+        }
+      },
+      "per_class_n": {
+        "Airtel_Money_Reversal": 4,
+        "Airtel_Money_Transfer": 19,
+        "App_Rewards": 14,
+        "Complaint_General": 6,
+        "Data_Bundle_Problems": 22,
+        "Network_Issues": 41,
+        "Non_Actionable": 57,
+        "Product_Enquiry": 20,
+        "Router_WiFi_5G": 21,
+        "SIM_Line_Services": 20
+      }
+    },
+    "sentiment": {
+      "models": {
+        "afroxlmr": {
+          "confusion": [
+            [
+              74,
+              19
+            ],
+            [
+              10,
+              47
+            ]
+          ],
+          "macro_f1": {
+            "ci95": [
+              0.7267759562841529,
+              0.8625769870729548
+            ],
+            "estimate": 0.8001929171834091,
+            "resamples_used": 1000
+          },
+          "n": 150,
+          "per_class": {
+            "negative": {
+              "f1": 0.8361581920903954,
+              "n": 93,
+              "precision": 0.8809523809523809,
+              "recall": 0.7956989247311828
+            },
+            "not_negative": {
+              "f1": 0.7642276422764228,
+              "n": 57,
+              "precision": 0.7121212121212122,
+              "recall": 0.8245614035087719
+            }
+          }
+        },
+        "keyword": {
+          "confusion": [
+            [
+              93,
+              0
+            ],
+            [
+              57,
+              0
+            ]
+          ],
+          "macro_f1": {
+            "ci95": [
+              0.35344827586206895,
+              0.4094488188976378
+            ],
+            "estimate": 0.38271604938271603,
+            "resamples_used": 1000
+          },
+          "n": 150,
+          "per_class": {
+            "negative": {
+              "f1": 0.7654320987654321,
+              "n": 93,
+              "precision": 0.62,
+              "recall": 1.0
+            },
+            "not_negative": {
+              "f1": 0.0,
+              "n": 57,
+              "precision": 0.0,
+              "recall": 0.0
+            }
+          }
+        },
+        "majority": {
+          "confusion": [
+            [
+              93,
+              0
+            ],
+            [
+              57,
+              0
+            ]
+          ],
+          "macro_f1": {
+            "ci95": [
+              0.35344827586206895,
+              0.4094488188976378
+            ],
+            "estimate": 0.38271604938271603,
+            "resamples_used": 1000
+          },
+          "n": 150,
+          "per_class": {
+            "negative": {
+              "f1": 0.7654320987654321,
+              "n": 93,
+              "precision": 0.62,
+              "recall": 1.0
+            },
+            "not_negative": {
+              "f1": 0.0,
+              "n": 57,
+              "precision": 0.0,
+              "recall": 0.0
+            }
+          }
+        },
+        "tfidf": {
+          "confusion": [
+            [
+              72,
+              21
+            ],
+            [
+              14,
+              43
+            ]
+          ],
+          "macro_f1": {
+            "ci95": [
+              0.6852690413035241,
+              0.8249367827270959
+            ],
+            "estimate": 0.7576065376979546,
+            "resamples_used": 1000
+          },
+          "n": 150,
+          "per_class": {
+            "negative": {
+              "f1": 0.8044692737430168,
+              "n": 93,
+              "precision": 0.8372093023255814,
+              "recall": 0.7741935483870968
+            },
+            "not_negative": {
+              "f1": 0.7107438016528925,
+              "n": 57,
+              "precision": 0.671875,
+              "recall": 0.7543859649122807
+            }
+          }
+        }
+      },
+      "n": 150,
+      "paired_vs_tfidf": {
+        "afroxlmr": {
+          "macro_f1_diff": {
+            "ci95": [
+              -0.016654271860397623,
+              0.09920619702243853
+            ],
+            "estimate": 0.04258637948545452,
+            "resamples_used": 1000
+          }
+        },
+        "keyword": {
+          "macro_f1_diff": {
+            "ci95": [
+              -0.45381638935074553,
+              -0.2910713978056158
+            ],
+            "estimate": -0.3748904883152386,
+            "resamples_used": 1000
+          }
+        },
+        "majority": {
+          "macro_f1_diff": {
+            "ci95": [
+              -0.45381638935074553,
+              -0.2910713978056158
+            ],
+            "estimate": -0.3748904883152386,
+            "resamples_used": 1000
+          }
+        }
+      },
+      "per_class_n": {
+        "negative": 93,
+        "not_negative": 57
+      }
+    },
+    "urgency": {
+      "models": {
+        "afroxlmr": {
+          "confusion": [
+            [
+              10,
+              6,
+              1
+            ],
+            [
+              7,
+              34,
+              11
+            ],
+            [
+              0,
+              9,
+              42
+            ]
+          ],
+          "emergency_recall": {
+            "ci95": [
+              0.6908982683982684,
+              0.9057040531097135
+            ],
+            "estimate": 0.803921568627451,
+            "n_emergency": 51,
+            "resamples_used": 1000
+          },
+          "false_emergency_rate": {
+            "ci95": [
+              0.06554732945531465,
+              0.23945070422535208
+            ],
+            "estimate": 0.14492753623188406,
+            "n_non_emergency": 69,
+            "resamples_used": 1000
+          },
+          "macro_f1": {
+            "ci95": [
+              0.5892329671172216,
+              0.7696163553809767
+            ],
+            "estimate": 0.6871675402834402,
+            "resamples_used": 1000
+          },
+          "n": 120,
+          "per_class": {
+            "emergency": {
+              "f1": 0.8,
+              "n": 51,
+              "precision": 0.7777777777777778,
+              "recall": 0.8235294117647058
+            },
+            "low": {
+              "f1": 0.5882352941176471,
+              "n": 17,
+              "precision": 0.5882352941176471,
+              "recall": 0.5882352941176471
+            },
+            "medium": {
+              "f1": 0.6732673267326733,
+              "n": 52,
+              "precision": 0.6938775510204082,
+              "recall": 0.6538461538461539
+            }
+          },
+          "qwk": {
+            "ci95": [
+              0.5667802043678621,
+              0.778924793627573
+            ],
+            "estimate": 0.686529229031347,
+            "resamples_used": 1000
+          }
+        },
+        "keyword": {
+          "confusion": [
+            [
+              13,
+              3,
+              1
+            ],
+            [
+              33,
+              17,
+              2
+            ],
+            [
+              28,
+              23,
+              0
+            ]
+          ],
+          "emergency_recall": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "estimate": 0.0,
+            "n_emergency": 51,
+            "resamples_used": 1000
+          },
+          "false_emergency_rate": {
+            "ci95": [
+              0.0,
+              0.10144927536231885
+            ],
+            "estimate": 0.043478260869565216,
+            "n_non_emergency": 69,
+            "resamples_used": 1000
+          },
+          "macro_f1": {
+            "ci95": [
+              0.15519894721675837,
+              0.2721498736343443
+            ],
+            "estimate": 0.21453634085213033,
+            "resamples_used": 1000
+          },
+          "n": 120,
+          "per_class": {
+            "emergency": {
+              "f1": 0.0,
+              "n": 51,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "low": {
+              "f1": 0.2857142857142857,
+              "n": 17,
+              "precision": 0.17567567567567569,
+              "recall": 0.7647058823529411
+            },
+            "medium": {
+              "f1": 0.35789473684210527,
+              "n": 52,
+              "precision": 0.3953488372093023,
+              "recall": 0.3269230769230769
+            }
+          },
+          "qwk": {
+            "ci95": [
+              -0.05144124505880573,
+              0.13879080558966167
+            ],
+            "estimate": 0.044448443404714655,
+            "resamples_used": 1000
+          }
+        },
+        "majority": {
+          "confusion": [
+            [
+              0,
+              0,
+              17
+            ],
+            [
+              0,
+              0,
+              52
+            ],
+            [
+              0,
+              0,
+              51
+            ]
+          ],
+          "emergency_recall": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "estimate": 0.0,
+            "n_emergency": 51,
+            "resamples_used": 1000
+          },
+          "false_emergency_rate": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "estimate": 0.0,
+            "n_non_emergency": 69,
+            "resamples_used": 1000
+          },
+          "macro_f1": {
+            "ci95": [
+              0.16969461697722568,
+              0.2271062271062271
+            ],
+            "estimate": 0.19883040935672514,
+            "resamples_used": 1000
+          },
+          "n": 120,
+          "per_class": {
+            "emergency": {
+              "f1": 0.5964912280701754,
+              "n": 51,
+              "precision": 0.425,
+              "recall": 1.0
+            },
+            "low": {
+              "f1": 0.0,
+              "n": 17,
+              "precision": 0.0,
+              "recall": 0.0
+            },
+            "medium": {
+              "f1": 0.0,
+              "n": 52,
+              "precision": 0.0,
+              "recall": 0.0
+            }
+          },
+          "qwk": {
+            "ci95": [
+              0.0,
+              0.0
+            ],
+            "estimate": 0.0,
+            "resamples_used": 1000
+          }
+        },
+        "tfidf": {
+          "confusion": [
+            [
+              8,
+              6,
+              3
+            ],
+            [
+              7,
+              36,
+              9
+            ],
+            [
+              1,
+              13,
+              37
+            ]
+          ],
+          "emergency_recall": {
+            "ci95": [
+              0.5370257452574526,
+              0.7907218992248062
+            ],
+            "estimate": 0.6666666666666666,
+            "n_emergency": 51,
+            "resamples_used": 1000
+          },
+          "false_emergency_rate": {
+            "ci95": [
+              0.08330479452054794,
+              0.2714285714285714
+            ],
+            "estimate": 0.17391304347826086,
+            "n_non_emergency": 69,
+            "resamples_used": 1000
+          },
+          "macro_f1": {
+            "ci95": [
+              0.5257300518557886,
+              0.7230785630441593
+            ],
+            "estimate": 0.632581893703389,
+            "resamples_used": 1000
+          },
+          "n": 120,
+          "per_class": {
+            "emergency": {
+              "f1": 0.74,
+              "n": 51,
+              "precision": 0.7551020408163265,
+              "recall": 0.7254901960784313
+            },
+            "low": {
+              "f1": 0.48484848484848486,
+              "n": 17,
+              "precision": 0.5,
+              "recall": 0.47058823529411764
+            },
+            "medium": {
+              "f1": 0.6728971962616822,
+              "n": 52,
+              "precision": 0.6545454545454545,
+              "recall": 0.6923076923076923
+            }
+          },
+          "qwk": {
+            "ci95": [
+              0.3859719184355809,
+              0.6909758131190777
+            ],
+            "estimate": 0.5538057742782152,
+            "resamples_used": 1000
+          }
+        }
+      },
+      "n": 120,
+      "paired_vs_tfidf": {
+        "afroxlmr": {
+          "emergency_recall_diff": {
+            "ci95": [
+              0.03565476190476189,
+              0.2586366538952745
+            ],
+            "estimate": 0.13725490196078438,
+            "resamples_used": 1000
+          },
+          "macro_f1_diff": {
+            "ci95": [
+              -0.02011428911406384,
+              0.1350643217328298
+            ],
+            "estimate": 0.05458564658005116,
+            "resamples_used": 1000
+          },
+          "qwk_diff": {
+            "ci95": [
+              0.0018879916621853902,
+              0.2722413431190477
+            ],
+            "estimate": 0.13272345475313185,
+            "resamples_used": 1000
+          }
+        },
+        "keyword": {
+          "emergency_recall_diff": {
+            "ci95": [
+              -0.7907218992248062,
+              -0.5370257452574526
+            ],
+            "estimate": -0.6666666666666666,
+            "resamples_used": 1000
+          },
+          "macro_f1_diff": {
+            "ci95": [
+              -0.5107259326162831,
+              -0.30669335043219254
+            ],
+            "estimate": -0.41804555285125866,
+            "resamples_used": 1000
+          },
+          "qwk_diff": {
+            "ci95": [
+              -0.6763408025164446,
+              -0.31848707549816896
+            ],
+            "estimate": -0.5093573308735005,
+            "resamples_used": 1000
+          }
+        },
+        "majority": {
+          "emergency_recall_diff": {
+            "ci95": [
+              -0.7907218992248062,
+              -0.5370257452574526
+            ],
+            "estimate": -0.6666666666666666,
+            "resamples_used": 1000
+          },
+          "macro_f1_diff": {
+            "ci95": [
+              -0.5364496970319027,
+              -0.32362086173138166
+            ],
+            "estimate": -0.4337514843466639,
+            "resamples_used": 1000
+          },
+          "qwk_diff": {
+            "ci95": [
+              -0.6909758131190777,
+              -0.3859719184355809
+            ],
+            "estimate": -0.5538057742782152,
+            "resamples_used": 1000
+          }
+        }
+      },
+      "per_class_n": {
+        "emergency": 51,
+        "low": 17,
+        "medium": 52
+      }
+    }
+  },
+  "kind": "data",
+  "not_evaluated": {},
+  "seed": 42,
+  "taxonomy_picks": 30
+}

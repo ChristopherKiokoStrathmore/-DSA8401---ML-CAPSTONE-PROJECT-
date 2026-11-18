@@ -6,8 +6,9 @@ Run from the repo root after ``make install``:
     python scripts/download_weights.py
     AFROXLMR_WEIGHTS_URL=<public-drive-url> python scripts/download_weights.py
 
-The committed URL and digest are placeholders. A placeholder URL exits 1 before
-any download. A hash mismatch deletes the partial file and exits 1.
+The committed digest is the real T4 ``model.pt``. The committed URL is
+``TODO_DRIVE_URL`` and exits 1 before any download. A hash mismatch deletes
+the partial file and exits 1.
 """
 
 from capstone.weights import main

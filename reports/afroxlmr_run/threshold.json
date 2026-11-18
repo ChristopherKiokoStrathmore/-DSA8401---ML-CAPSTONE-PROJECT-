@@ -1,0 +1,9 @@
+{
+  "cap": 0.2,
+  "fallback_lowest_false_rate": false,
+  "meets_cap": true,
+  "rule": "On validation only: maximise emergency recall subject to false-emergency rate <= 0.20. Ties: lower false-emergency rate, then a higher threshold. If no threshold meets the cap, use the lowest false-emergency rate.",
+  "threshold": 0.5,
+  "val_emergency_recall": 0.8095238095238095,
+  "val_false_emergency_rate": 0.1794871794871795
+}

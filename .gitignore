@@ -2,6 +2,16 @@
 data/private/
 reports/**
 !reports/.gitkeep
+!reports/results.json
+!reports/results.md
+!reports/figures/
+!reports/figures/issue_afroxlmr.png
+!reports/figures/sentiment_afroxlmr.png
+!reports/figures/urgency_afroxlmr.png
+!reports/figures/learning_curves.png
+!reports/afroxlmr_run/
+!reports/afroxlmr_run/curves.json
+!reports/afroxlmr_run/threshold.json
 artifacts/**
 !artifacts/.gitkeep
 

@@ -1,5 +1,8 @@
 {
-  "url": "https://drive.google.com/file/d/PLACEHOLDER/view?usp=sharing",
+  "url": "TODO_DRIVE_URL",
+  "sha256": "778246a31841ac554fbf574cfc42cc9579981b67fb85a8eb1814dbb689ea9eb6",
+  "bytes": 1112288438,
+  "filename": "model.pt",
   "sha256_file": "artifacts/transformer/weights.sha256",
   "out_dir": "artifacts/transformer"
 }

@@ -1,6 +1,3 @@
-# Placeholder digest. This is not the hash of a real AfroXLMR checkpoint.
-# scripts/download_weights.py refuses the placeholder URL in config/weights.json
-# and exits non-zero when downloaded bytes do not match the digest below.
-# One line means the downloaded file is stored under this name.
-# Several lines mean the download is a zip and each member is hashed before extract.
-0000000000000000000000000000000000000000000000000000000000000000  afroxlmr.pt
+# Colab T4 AfroXLMR-base state dict. model.pt is 1112288438 bytes.
+# The download URL is TODO_DRIVE_URL in config/weights.json until the owner pastes the Drive link.
+778246a31841ac554fbf574cfc42cc9579981b67fb85a8eb1814dbb689ea9eb6  model.pt

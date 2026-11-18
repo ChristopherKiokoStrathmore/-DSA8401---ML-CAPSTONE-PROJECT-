@@ -38,13 +38,22 @@ make real DATA=/path/to/workbook.xlsx LABELS=/path/to/label_dir
 
 That runs prepare, splits, baselines, AfroXLMR training, and evaluation. Outputs land in `data/private/`, `reports/`, and `artifacts/`. Do not commit them.
 
-Colab T4: open `colab/run_real.ipynb`. It clones `main`, installs, uploads a labels-and-manifests bundle, fits baselines, trains, evaluates, prints the SHA-256, and zips the report and the weights. The notebook stores no outputs. The T4 run is not executed in this checkout.
+Colab T4: open `colab/run_real.ipynb`. It clones `main`, installs, uploads a labels-and-manifests bundle, fits baselines, trains, evaluates, prints the SHA-256, and zips the report and the weights. The notebook stores no outputs.
+
+The T4 run is already recorded. Seed 42, 6 of 6 epochs, 1,140 steps, about 25 minutes, no early stop. Epoch-6 validation: issue macro-F1 0.5819, sentiment macro-F1 0.8935, urgency QWK 0.5817. The emergency threshold chosen on validation is 0.50 (recall 0.810, false-emergency rate 0.179). Test macro-F1 is issue 0.656, sentiment 0.800, urgency 0.687, each above TF-IDF, with paired intervals that include zero. Full tables, the learning curve, and the three confusion matrices are in `report/report.md` and `reports/`. Smoke numbers are still harness checks.
 
 ## API
 
-`MODEL_BACKEND=tfidf` (the default) loads `artifacts/tfidf/{issue,sentiment,urgency}.joblib` and `artifacts/tfidf/labels.json`. Those joblibs are scikit-learn pipelines: mask, word and character TF-IDF, logistic regression, `predict_proba`.
+`MODEL_BACKEND` defaults to `tfidf`. That backend loads `artifacts/tfidf/{issue,sentiment,urgency}.joblib` and `artifacts/tfidf/labels.json`. Those joblibs are scikit-learn pipelines: mask, word and character TF-IDF, logistic regression, `predict_proba`. Leave the default there for a CPU reviewer.
 
-`MODEL_BACKEND=transformer` calls `capstone.models.multitask.load_for_inference`. The default directory is `artifacts/afroxlmr`. Override it with `TRANSFORMER_DIR`. Each `predict` row has the issue label and probabilities, the sentiment label and probability, and the urgency level, probabilities, and emergency flag. The service maps that onto the JSON below. A missing checkpoint stays up: `/health` is 503 and says why.
+Switch to the T4 checkpoint with:
+
+```bash
+MODEL_BACKEND=transformer TRANSFORMER_DIR=artifacts/transformer \
+  .venv/bin/uvicorn capstone.serving.app:app --host 127.0.0.1 --port 8000
+```
+
+`MODEL_BACKEND=transformer` calls `capstone.models.multitask.load_for_inference`. If `TRANSFORMER_DIR` is unset, the directory is `artifacts/afroxlmr` (where `make train-transformer` writes). The download script writes the same `model.pt` to `artifacts/transformer`. Each `predict` row has the issue label and probabilities, the sentiment label and probability, and the urgency level, probabilities, and emergency flag. The service maps that onto the JSON below. A missing checkpoint stays up: `/health` is 503 and says why.
 
 ```bash
 curl -s http://127.0.0.1:8000/health
@@ -82,17 +91,29 @@ curl -s -X POST http://127.0.0.1:8000/predict \
   -d '{"text":"My line has been down since morning, please help"}'
 ```
 
-The image is Python slim, installs a CPU torch wheel, and runs uvicorn as a non-root user. `MODEL_BACKEND` defaults to `tfidf`. `HEALTHCHECK` calls `/health`. If the TF-IDF directory is empty at start, the entrypoint trains the synthetic fixture so the container can answer. Mount the Phase 3 `artifacts/tfidf` directory to serve the real pipelines instead.
+The image is Python slim, installs a CPU torch wheel, and runs uvicorn as a non-root user. `MODEL_BACKEND` defaults to `tfidf`. `HEALTHCHECK` calls `/health`. If the TF-IDF directory is empty at start, the entrypoint trains the synthetic fixture so the container can answer. Mount the real `artifacts/tfidf` directory to serve those pipelines instead.
+
+The same image serves the transformer when the checkpoint is mounted at `/app/artifacts/transformer/model.pt`:
+
+```bash
+MODEL_BACKEND=transformer docker compose up --build
+```
 
 ## Weights
 
-AfroXLMR weights are not in git. `config/weights.json` holds a placeholder Google Drive URL. `artifacts/transformer/weights.sha256` holds a placeholder digest. Training also writes `artifacts/afroxlmr/sha256.txt` for the state dict it just saved.
+AfroXLMR weights are not in git. The T4 `model.pt` is 1,112,288,438 bytes. SHA-256:
+
+```
+778246a31841ac554fbf574cfc42cc9579981b67fb85a8eb1814dbb689ea9eb6
+```
+
+That digest is in `artifacts/transformer/weights.sha256` and `config/weights.json`. The URL in the config is `TODO_DRIVE_URL` until the owner pastes the Drive link. The script refuses that URL before any download.
 
 ```bash
 AFROXLMR_WEIGHTS_URL='https://drive.google.com/file/d/<id>/view' python scripts/download_weights.py
 ```
 
-`WEIGHTS_URL` is an alias. A Drive link uses gdown. Any other URL uses urllib. The script checks the file against the SHA-256 and deletes a mismatch. The placeholder URL is refused before any download.
+`WEIGHTS_URL` is an alias. A Drive link uses gdown. Any other URL uses urllib. The script checks the file against the SHA-256 and deletes a mismatch. Training also writes `artifacts/afroxlmr/sha256.txt` for the state dict it just saved.
 
 ## Layout
 
@@ -107,6 +128,9 @@ src/capstone/evaluate.py        test metrics, bootstrap, error file
 src/capstone/serving/           FastAPI app
 src/capstone/weights.py         download and SHA-256 check
 docs/architecture.png           diagram above
+reports/results.json            real T4 test metrics
+reports/figures/                AfroXLMR confusion matrices and the learning curve
+reports/afroxlmr_run/           curves.json and threshold.json from the T4 run
 docs/label_rubric.md            classes, provenance, recomputed agreement
 docs/technique_justification.md one row per syllabus area
 report/report.md                the capstone report

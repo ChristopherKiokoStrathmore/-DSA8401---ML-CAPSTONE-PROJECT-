@@ -1,0 +1,22 @@
+base_idx,text,urg,source,weight
+0,fixedgold-00 t0z0 t0z1 t0z2 t0z3 t0z4 t0z5 t0z6 t0z7 t0z8 t0z9 end 7,0.0,gold,1.0
+1,fixedgold-01 t1z0 t1z1 t1z2 t1z3 t1z4 t1z5 t1z6 t1z7 t1z8 t1z9 end 48,0.5,gold,1.0
+2,fixedgold-02 t2z0 t2z1 t2z2 t2z3 t2z4 t2z5 t2z6 t2z7 t2z8 t2z9 end 89,1.0,gold,1.0
+3,fixedgold-03 t3z0 t3z1 t3z2 t3z3 t3z4 t3z5 t3z6 t3z7 t3z8 t3z9 end 130,0.0,gold,1.0
+4,fixedgold-04 t4z0 t4z1 t4z2 t4z3 t4z4 t4z5 t4z6 t4z7 t4z8 t4z9 end 171,0.5,gold,1.0
+5,fixedgold-05 t5z0 t5z1 t5z2 t5z3 t5z4 t5z5 t5z6 t5z7 t5z8 t5z9 end 212,1.0,gold,1.0
+6,fixedgold-06 t6z0 t6z1 t6z2 t6z3 t6z4 t6z5 t6z6 t6z7 t6z8 t6z9 end 253,0.0,gold,1.0
+7,fixedgold-07 t7z0 t7z1 t7z2 t7z3 t7z4 t7z5 t7z6 t7z7 t7z8 t7z9 end 294,0.5,gold,1.0
+8,fixedgold-08 t8z0 t8z1 t8z2 t8z3 t8z4 t8z5 t8z6 t8z7 t8z8 t8z9 end 335,1.0,gold,1.0
+9,fixedgold-09 t9z0 t9z1 t9z2 t9z3 t9z4 t9z5 t9z6 t9z7 t9z8 t9z9 end 376,0.0,gold,1.0
+10,fixedgold-10 t10z0 t10z1 t10z2 t10z3 t10z4 t10z5 t10z6 t10z7 t10z8 t10z9 end 417,0.5,gold,1.0
+11,fixedgold-11 t11z0 t11z1 t11z2 t11z3 t11z4 t11z5 t11z6 t11z7 t11z8 t11z9 end 458,1.0,gold,1.0
+12,fixedgold-12 t12z0 t12z1 t12z2 t12z3 t12z4 t12z5 t12z6 t12z7 t12z8 t12z9 end 499,0.0,gold,1.0
+13,fixedgold-13 t13z0 t13z1 t13z2 t13z3 t13z4 t13z5 t13z6 t13z7 t13z8 t13z9 end 540,0.5,gold,1.0
+14,fixedgold-14 t14z0 t14z1 t14z2 t14z3 t14z4 t14z5 t14z6 t14z7 t14z8 t14z9 end 581,1.0,gold,1.0
+15,fixedgold-15 t15z0 t15z1 t15z2 t15z3 t15z4 t15z5 t15z6 t15z7 t15z8 t15z9 end 622,0.0,gold,1.0
+16,fixedgold-16 t16z0 t16z1 t16z2 t16z3 t16z4 t16z5 t16z6 t16z7 t16z8 t16z9 end 663,0.5,gold,1.0
+17,fixedgold-17 t17z0 t17z1 t17z2 t17z3 t17z4 t17z5 t17z6 t17z7 t17z8 t17z9 end 704,1.0,gold,1.0
+80,please reverse the money sent to the wrong person yesterday,1.0,gold,1.0
+81,the rewards balance disappeared after the app update last week,0.5,gold,1.0
+82,customers in this estate have had no signal since dawn today,1.0,gold,1.0

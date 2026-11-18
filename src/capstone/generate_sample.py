@@ -112,14 +112,25 @@ def write_sample(path: Path, rows: list[dict[str, str]]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Write the synthetic sample workbook.")
+    parser = argparse.ArgumentParser(description="Write the synthetic sample workbook and labels.")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--rows", type=int, default=400)
     parser.add_argument("--out", type=Path, default=Path("data/sample/messages.csv"))
+    parser.add_argument("--labels", type=Path, default=Path("data/sample/labels"))
+    parser.add_argument(
+        "--skip-labels",
+        action="store_true",
+        help="write only the workbook",
+    )
     args = parser.parse_args(argv)
     rows = generate_rows(n=args.rows, seed=args.seed)
     write_sample(args.out, rows)
     print(f"wrote {len(rows)} synthetic rows to {args.out}")
+    if not args.skip_labels:
+        from capstone.sample_labels import write_label_dir
+
+        write_label_dir(args.labels)
+        print(f"wrote synthetic label files to {args.labels}")
     return 0
 
 

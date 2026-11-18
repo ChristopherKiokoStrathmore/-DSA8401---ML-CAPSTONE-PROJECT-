@@ -1,0 +1,17 @@
+text,issue,sentiment,urgency
+geminisilver-00 m0z0 m0z1 m0z2 m0z3 m0z4 m0z5 m0z6 m0z7 m0z8 m0z9 end 7,Airtel_Money_Reversal,negative,low
+geminisilver-01 m1z0 m1z1 m1z2 m1z3 m1z4 m1z5 m1z6 m1z7 m1z8 m1z9 end 48,Airtel_Money_Transfer,not_negative,medium
+geminisilver-02 m2z0 m2z1 m2z2 m2z3 m2z4 m2z5 m2z6 m2z7 m2z8 m2z9 end 89,App_Rewards,negative,emergency
+geminisilver-03 m3z0 m3z1 m3z2 m3z3 m3z4 m3z5 m3z6 m3z7 m3z8 m3z9 end 130,Complaint_General,not_negative,low
+geminisilver-04 m4z0 m4z1 m4z2 m4z3 m4z4 m4z5 m4z6 m4z7 m4z8 m4z9 end 171,Data_Bundle_Problems,negative,medium
+geminisilver-05 m5z0 m5z1 m5z2 m5z3 m5z4 m5z5 m5z6 m5z7 m5z8 m5z9 end 212,Network_Issues,not_negative,emergency
+geminisilver-06 m6z0 m6z1 m6z2 m6z3 m6z4 m6z5 m6z6 m6z7 m6z8 m6z9 end 253,Non_Actionable,negative,low
+geminisilver-07 m7z0 m7z1 m7z2 m7z3 m7z4 m7z5 m7z6 m7z7 m7z8 m7z9 end 294,Product_Enquiry,not_negative,medium
+geminisilver-08 m8z0 m8z1 m8z2 m8z3 m8z4 m8z5 m8z6 m8z7 m8z8 m8z9 end 335,Router_WiFi_5G,negative,emergency
+geminisilver-09 m9z0 m9z1 m9z2 m9z3 m9z4 m9z5 m9z6 m9z7 m9z8 m9z9 end 376,SIM_Line_Services,not_negative,low
+geminisilver-10 m10z0 m10z1 m10z2 m10z3 m10z4 m10z5 m10z6 m10z7 m10z8 m10z9 end 417,Airtel_Money_Reversal,negative,medium
+geminisilver-11 m11z0 m11z1 m11z2 m11z3 m11z4 m11z5 m11z6 m11z7 m11z8 m11z9 end 458,Airtel_Money_Transfer,not_negative,emergency
+geminisilver-12 m12z0 m12z1 m12z2 m12z3 m12z4 m12z5 m12z6 m12z7 m12z8 m12z9 end 499,App_Rewards,negative,low
+geminisilver-13 m13z0 m13z1 m13z2 m13z3 m13z4 m13z5 m13z6 m13z7 m13z8 m13z9 end 540,Complaint_General,not_negative,medium
+geminisilver-14 m14z0 m14z1 m14z2 m14z3 m14z4 m14z5 m14z6 m14z7 m14z8 m14z9 end 581,Data_Bundle_Problems,negative,emergency
+the rewards balance disappeared after the app update last week,App_Rewards,negative,medium

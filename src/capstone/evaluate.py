@@ -40,6 +40,7 @@ from capstone.models.metrics import (
 from capstone.models.multitask import load_for_inference
 
 TAXONOMY_PICKS = 30
+_MODEL_ORDER = ("majority", "keyword", "tfidf", "afroxlmr")
 URGENCY_ORDER = {"low": 0, "medium": 1, "emergency": 2}
 MONEY = {"Airtel_Money_Transfer", "Airtel_Money_Reversal"}
 NETWORK = {"Network_Issues", "Data_Bundle_Problems", "Router_WiFi_5G"}
@@ -92,7 +93,7 @@ def evaluate(
     cap: float = EMERGENCY_FALSE_RATE_CAP,
 ) -> dict:
     splits = head_splits(label_dir, manifest_dir)
-    predictors = _predictors(tfidf_dir, transformer_dir, baselines_dir)
+    predictors, skipped = _predictors(tfidf_dir, transformer_dir, baselines_dir)
     thresholds = {}
     for name, predictor in predictors.items():
         thresholds[name] = _threshold_for(predictor, splits["urgency"]["val"], cap)
@@ -109,7 +110,11 @@ def evaluate(
         model_preds = {}
         model_flags = {}
         model_blocks = {}
-        for name, predictor in predictors.items():
+        for name in _MODEL_ORDER:
+            if name in skipped:
+                model_blocks[name] = skipped[name]
+                continue
+            predictor = predictors[name]
             predictions = predictor.predict(
                 texts, emergency_threshold=thresholds[name]["threshold"]
             )
@@ -144,6 +149,7 @@ def evaluate(
             "cap": cap,
             "by_model": thresholds,
         },
+        "not_evaluated": skipped,
         "heads": heads,
         "taxonomy_picks": taxonomy,
         "figures": sorted(str(path.relative_to(out_dir)) for path in figures.glob("*.png")),
@@ -157,14 +163,56 @@ def evaluate(
     return payload
 
 
-def _predictors(tfidf_dir: Path, transformer_dir: Path, baselines_dir: Path) -> dict:
-    majority = load_majority(baselines_dir / "majority.json")
-    return {
-        "majority": majority,
-        "keyword": KeywordPredictor(majority.fitted),
-        "tfidf": load_tfidf(tfidf_dir),
-        "afroxlmr": load_for_inference(transformer_dir),
-    }
+def _predictors(tfidf_dir: Path, transformer_dir: Path, baselines_dir: Path) -> tuple[dict, dict]:
+    """Load every artefact that is on disk. A missing model is not a crash."""
+    predictors: dict = {}
+    skipped: dict = {}
+    majority_path = baselines_dir / "majority.json"
+    if majority_path.is_file():
+        majority = load_majority(majority_path)
+        predictors["majority"] = majority
+        predictors["keyword"] = KeywordPredictor(majority.fitted)
+    else:
+        note = _not_evaluated(f"{majority_path} is absent")
+        skipped["majority"] = note
+        skipped["keyword"] = note
+    tfidf_ready = all(
+        (tfidf_dir / name).is_file()
+        for name in ("issue.joblib", "sentiment.joblib", "urgency.joblib", "labels.json")
+    )
+    if tfidf_ready:
+        predictors["tfidf"] = load_tfidf(tfidf_dir)
+    else:
+        skipped["tfidf"] = _not_evaluated(f"{tfidf_dir} is absent")
+    transformer = _load_transformer(transformer_dir)
+    if isinstance(transformer, dict):
+        skipped["afroxlmr"] = transformer
+    else:
+        predictors["afroxlmr"] = transformer
+    if not predictors:
+        raise RuntimeError("no model artefacts found to evaluate")
+    return predictors, skipped
+
+
+def _not_evaluated(reason: str) -> dict:
+    return {"status": "not evaluated", "reason": reason}
+
+
+def _load_transformer(directory: Path):
+    directory = Path(directory)
+    if not (directory / "model.pt").is_file():
+        reason = "artifacts/afroxlmr is absent"
+        if directory.name != "afroxlmr":
+            reason = f"{directory} is absent"
+        return _not_evaluated(reason)
+    try:
+        return load_for_inference(directory)
+    except Exception as exc:
+        return _not_evaluated(f"{directory} could not be loaded ({type(exc).__name__})")
+
+
+def _scored(model: dict) -> bool:
+    return model.get("status") != "not evaluated"
 
 
 def _threshold_for(predictor, val_rows, cap: float) -> dict:
@@ -243,6 +291,8 @@ def _paired(
     classes: list[str],
     flags: dict[str, list[str]] | None,
 ) -> dict:
+    if "tfidf" not in model_preds:
+        return {}
     reference = model_preds["tfidf"]
 
     def macro_metric(gold_s, pred_s):
@@ -376,7 +426,13 @@ def _banner(kind: str) -> str:
 
 def _markdown(payload: dict) -> str:
     lines = ["# Evaluation", "", f"> {payload['banner']}", ""]
-    rule = payload["emergency_threshold"]["by_model"]["tfidf"]["rule"]
+    by_model = payload["emergency_threshold"]["by_model"]
+    if "tfidf" in by_model:
+        rule = by_model["tfidf"]["rule"]
+    elif by_model:
+        rule = next(iter(by_model.values()))["rule"]
+    else:
+        rule = "No model was loaded, so no validation threshold was chosen."
     lines.append(f"Emergency threshold rule: {rule}")
     lines.append("")
     lines.append("| model | threshold | val recall | val false-emergency rate | met cap |")
@@ -394,6 +450,9 @@ def _markdown(payload: dict) -> str:
             lines.append(f"- {name}: {count}")
         lines.extend(["", "| model | macro-F1 | 95% CI |", "| --- | ---: | --- |"])
         for name, model in block["models"].items():
+            if not _scored(model):
+                lines.append(f"| {name} | not evaluated | |")
+                continue
             estimate = model["macro_f1"]["estimate"]
             low, high = model["macro_f1"]["ci95"]
             lines.append(f"| {name} | {estimate:.3f} | {_fmt_ci(low, high)} |")
@@ -407,6 +466,9 @@ def _markdown(payload: dict) -> str:
                 ]
             )
             for name, model in block["models"].items():
+                if not _scored(model):
+                    lines.append(f"| {name} | not evaluated | | | | |")
+                    continue
                 lines.append(
                     f"| {name} | {model['qwk']['estimate']:.3f} | "
                     f"{model['emergency_recall']['estimate']:.3f} | "
@@ -420,12 +482,18 @@ def _markdown(payload: dict) -> str:
         lines.append(header)
         lines.append("| --- | " + " | ".join("---:" for _ in class_names) + " |")
         for name, model in block["models"].items():
+            if not _scored(model):
+                blanks = " | ".join(["not evaluated"] * len(class_names))
+                lines.append(f"| {name} | {blanks} |")
+                continue
             cells = []
             for class_name in class_names:
                 stats = model["per_class"][class_name]
                 cells.append(f"{stats['f1']:.2f} (n={stats['n']})")
             lines.append("| " + name + " | " + " | ".join(cells) + " |")
         lines.extend(["", "Paired difference versus TF-IDF (model minus TF-IDF), macro-F1:", ""])
+        if not block["paired_vs_tfidf"]:
+            lines.append("- not evaluated (TF-IDF was not scored)")
         for name, diff in block["paired_vs_tfidf"].items():
             estimate = diff["macro_f1_diff"]["estimate"]
             low, high = diff["macro_f1_diff"]["ci95"]

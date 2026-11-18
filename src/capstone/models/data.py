@@ -6,7 +6,6 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-from capstone.duplicates import normalise_message
 from capstone.labels import (
     ISSUE_CLASSES,
     SENTIMENT_CLASSES,
@@ -90,43 +89,34 @@ def head_splits(label_dir: Path, manifest_dir: Path) -> dict[str, dict[str, list
 
 
 def merged_split(splits: dict[str, dict[str, list[Example]]], split: str) -> list[MultiExample]:
-    """Merge the three heads on normalised text inside one split.
+    """One training example per source row.
 
-    A text that is in the issue train split and the sentiment train split becomes
-    one row with both labels. A text that is only in one head trains only that
-    head. Labels are never taken from a different split, so a test label cannot
-    attach to a training row.
+    Rows are deduped by ``(file, row_id, head)``, which ``head_splits`` already
+    guarantees, not by normalised text. Two different rows that collapse to the
+    same string both stay, so a label is never dropped. On the real files that
+    collision was one issue training row and one sentiment training row.
+
+    Each example carries only the head it was labelled for. Masked loss ignores
+    the others. A label from another split is never attached.
     """
-    by_text: dict[str, dict] = {}
-    order: list[str] = []
+    rows: list[MultiExample] = []
+    seen: set[tuple[str, int, str]] = set()
     for head in HEADS:
         for example in splits[head][split]:
-            key = normalise_message(example.text)
-            if key not in by_text:
-                by_text[key] = {
-                    "text": example.text,
-                    "issue": None,
-                    "sentiment": None,
-                    "urgency": None,
-                    "weight": 1.0,
-                }
-                order.append(key)
-            slot = by_text[key]
-            current = slot[head]
-            if current is None:
-                slot[head] = example.label
-            if head == "urgency":
-                slot["weight"] = example.weight
-    return [
-        MultiExample(
-            text=by_text[key]["text"],
-            issue=by_text[key]["issue"],
-            sentiment=by_text[key]["sentiment"],
-            urgency=by_text[key]["urgency"],
-            weight=float(by_text[key]["weight"]),
-        )
-        for key in order
-    ]
+            key = (example.file, example.row_id, head)
+            if key in seen:
+                continue
+            seen.add(key)
+            rows.append(
+                MultiExample(
+                    text=example.text,
+                    issue=example.label if head == "issue" else None,
+                    sentiment=example.label if head == "sentiment" else None,
+                    urgency=example.label if head == "urgency" else None,
+                    weight=example.weight if head == "urgency" else 1.0,
+                )
+            )
+    return rows
 
 
 def class_weight_vector(labels: list[str], classes: tuple[str, ...]) -> list[float]:

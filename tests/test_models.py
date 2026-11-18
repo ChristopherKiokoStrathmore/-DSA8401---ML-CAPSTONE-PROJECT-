@@ -23,6 +23,37 @@ from capstone.sample_labels import write_label_dir
 from capstone.splits import build_manifests, write_manifests
 
 
+def test_merged_split_keeps_rows_that_normalise_alike() -> None:
+    from capstone.models.data import Example, merged_split
+
+    issue_a = Example("Hello  there", "Network_Issues", 1.0, "issue.csv", 1)
+    issue_b = Example("hello there", "Data_Bundle_Problems", 1.0, "issue.csv", 2)
+    sent_a = Example("hello there", "negative", 1.0, "sentiment_hand.csv", 1)
+    sent_b = Example("Hello there", "not_negative", 1.0, "sentiment_hand.csv", 2)
+    splits = {
+        "issue": {"train": [issue_a, issue_b], "val": [], "test": []},
+        "sentiment": {"train": [sent_a, sent_b], "val": [], "test": []},
+        "urgency": {"train": [], "val": [], "test": []},
+    }
+    merged = merged_split(splits, "train")
+    assert len(merged) == 4
+    assert {row.issue for row in merged if row.issue} == {
+        "Network_Issues",
+        "Data_Bundle_Problems",
+    }
+    assert {row.sentiment for row in merged if row.sentiment} == {"negative", "not_negative"}
+
+
+def test_absent_transformer_is_not_evaluated(tmp_path: Path) -> None:
+    from capstone.evaluate import _load_transformer
+
+    missing = _load_transformer(tmp_path / "afroxlmr")
+    assert missing == {
+        "status": "not evaluated",
+        "reason": "artifacts/afroxlmr is absent",
+    }
+
+
 def test_real_config_names_afroxlmr_and_freezes_eight_layers() -> None:
     config = yaml.safe_load(Path("configs/afroxlmr.yaml").read_text(encoding="utf-8"))
     assert config["model_name"] == MODEL_ID == "Davlan/afro-xlmr-base"

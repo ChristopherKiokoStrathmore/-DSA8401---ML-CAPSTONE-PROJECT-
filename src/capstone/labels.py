@@ -8,8 +8,11 @@ second copy of the issue file must be dropped rather than passed in.
     sentiment_hand.csv       text, sentiment          (hand labels, primary)
     sentiment_platform.csv   text, sentiment          (platform-derived, agreement only)
     sentiment_test.csv       row_id, message, your_sentiment
+                             renamed from sentiment_test_to_annotate(in).csv
     urgency_train.csv        base_idx, text, urg, source, weight
+                             renamed from urgency_v3_train (2).csv
     urgency_test.csv         base_idx, text, urg, source, weight
+                             renamed from urgency_v3_test (2).csv
     gemini_relabeled.csv     text, issue, sentiment, urgency
 
 Texts are already masked. This module does not mask them again.
@@ -41,14 +44,16 @@ ISSUE_CLASSES: tuple[str, ...] = (
 SENTIMENT_CLASSES: tuple[str, ...] = ("negative", "not_negative")
 URGENCY_CLASSES: tuple[str, ...] = ("low", "medium", "emergency")
 
-# Real filenames from the label-file schema, and the names this loader reads.
+# Original export names, including spaces and parentheses, and the names this
+# loader reads. Rename before pointing ``--labels`` at the directory. A
+# byte-identical second copy of the issue file must be dropped, not renamed in.
 FILE_MAP: dict[str, str] = {
     "issue_retagged_clean_1500.csv": "issue.csv",
     "sentiment_judgment_1500.csv": "sentiment_hand.csv",
     "sentiment_binary_1500.csv": "sentiment_platform.csv",
-    "sentiment_test_150.csv": "sentiment_test.csv",
-    "urgency_train.csv": "urgency_train.csv",
-    "urgency_test.csv": "urgency_test.csv",
+    "sentiment_test_to_annotate(in).csv": "sentiment_test.csv",
+    "urgency_v3_train (2).csv": "urgency_train.csv",
+    "urgency_v3_test (2).csv": "urgency_test.csv",
     "gemini_relabeled.csv": "gemini_relabeled.csv",
 }
 

@@ -8,7 +8,7 @@ Names were checked on 18 Nov 2026 against [MULTI-HEAD-](https://github.com/Chris
 
 Source file: `issue_retagged_clean_1500.csv`, loaded as `issue.csv` (`text`, `label`). A byte-identical second copy of that file exists in the raw export. Drop the copy. Do not load it.
 
-Provenance: retagged by content (Chris). Counts below are the label-file schema counts. `python -m capstone.splits` recomputes them when the real directory is passed. They were not recomputed in this environment.
+Provenance: retagged by content (Chris). Class counts below are from the label files. The real grouped split, seed 42, after gold removal, is train 1,028 / validation 226 / test 224.
 
 | Label | Schema count | What it covers |
 | --- | ---: | --- |
@@ -38,21 +38,22 @@ Primary labels: `sentiment_judgment_1500.csv`, loaded as `sentiment_hand.csv`. S
 
 Platform-derived labels: `sentiment_binary_1500.csv`, loaded as `sentiment_platform.csv`. Built from the workbook's noisy `Sentiment` column. Schema counts: negative 702, not_negative 798. This file is not a training source. It is only the agreement comparison.
 
-Test: `sentiment_test_150.csv`, loaded as `sentiment_test.csv` (`row_id`, `message`, `your_sentiment`). 150 hand-annotated rows, negative 93, not_negative 57. The schema says this set is exact-disjoint from the 1,500.
+Test: `sentiment_test_to_annotate(in).csv`, loaded as `sentiment_test.csv` (`row_id`, `message`, `your_sentiment`). 150 hand-annotated rows, negative 93, not_negative 57. The schema says this set is exact-disjoint from the 1,500.
 
 Train and validation are the hand file after gold removal, split in the 70:15 ratio (the non-test part of 70/15/15), seed 42. The 150 is the test set and is not carved out of the 1,500.
 
+Real hand-file split after gold removal, seed 42: train 1,215 / validation 260. Test is the separate 150 and is not carved from the 1,500.
+
 ### Agreement
 
-Recomputed on the real files, as stated in the label-file schema (18 Nov 2026), platform-derived against hand:
+Recomputed from the real files, platform-derived against hand:
 
-| | value |
-| --- | ---: |
-| paired texts | 1500 |
-| raw agreement | 0.711 |
-| Cohen's kappa | 0.428 |
+| Join | n | raw agreement | Cohen's kappa |
+| --- | ---: | ---: | ---: |
+| unique normalised text | 1499 | 0.711 | 0.427 |
+| row-aligned | 1500 | 0.711 | 0.428 |
 
-`python -m capstone.agreement --labels <dir>` is the recomputation. It joins on normalised masked text and prints agreement and kappa. This environment does not have the real files, so the two figures above were not re-run here. A smoke run prints a harness check on the synthetic files and must not be quoted as this table.
+`python -m capstone.agreement --labels <dir>` joins on normalised masked text, which is the 1,499-row figure. A smoke run on the synthetic files is a harness check and is not this table.
 
 ## Urgency (ordinal)
 
@@ -70,13 +71,15 @@ Test file: `urgency_test.csv`, same columns. 120 rows, all gold. Schema counts: 
 
 Validation is carved from the gold rows inside the 868 that do not exact-match or near-duplicate the gold registry. The target is about 60 rows, grouped and stratified on the urgency label, seed 42, so the later emergency threshold is chosen on gold-like labels. When a file has fewer than 60 such rows, the carve is one third, so a small file still leaves gold in train. Mixed gold/distilled duplicate groups stay in train. The rest of the 868 is train. Source and weight are copied onto every urgency manifest record.
 
+Real split, seed 42: train 794 / validation 60 / test 120. Every validation row is gold. Exact overlap between urgency train and urgency test is 0.
+
 ## Gold registry
 
 Gold is `urgency_test.csv` (120) plus `sentiment_test.csv` (150).
 
 Every train and validation pool drops a row whose normalised masked text is an exact match or a near-duplicate of that gold. Near-duplicates use the same character 3-gram Dice groups as the workbook pipeline (`dup_group_id`). Gemini is not a training source. The overlap is still counted.
 
-Schema-reported exact overlaps (label-file schema, 18 Nov 2026):
+Exact overlaps recomputed on the real files:
 
 | Comparison | Exact overlaps |
 | --- | ---: |
@@ -84,18 +87,22 @@ Schema-reported exact overlaps (label-file schema, 18 Nov 2026):
 | urgency test in `gemini_relabeled.csv` | 23 |
 | urgency train vs urgency test | 0 |
 
-`reports/manifests/registry.json` recomputes these, plus near-duplicate overlaps, from the directory it was given. On the synthetic sample the numbers are a harness check. On the real directory they are the recomputation. The table above is the schema citation, because the real files were not in this environment.
+`reports/manifests/registry.json` recomputes these, plus near-duplicate overlaps, from the directory it is given. On the synthetic sample the numbers are a harness check. The table above is the real-file recomputation.
+
+## Real workbook audit
+
+`prepare_data` on the real export: 526,369 rows in, 379,575 kept. Dropped as empty: 47,004. Dropped as non-linguistic: 98,317. Dropped as auto receipts: 1,473. These are aggregate counts. No message text is stored in the audit.
 
 ## What is recomputed, and what is only reported
 
 | Figure | Status |
 | --- | --- |
-| Agreement 0.711 and kappa 0.428 | Recomputed on the real files according to the label-file schema. Cited here. Not re-run in this environment. The script will recompute them. |
-| Class counts in the tables above | Same: schema counts from the files, cited, not re-run here |
-| Exact overlaps 9, 23, and 0 | Same |
-| Any number that appears only in the proposal and not in the label files | **reported** |
-
-No other proposal figure was available to recompute. If a proposal number is not in the table above, treat it as reported.
+| Agreement 0.711, kappa 0.427 on 1,499 unique texts, and 0.711 / 0.428 row-aligned on 1,500 | recomputed from the real label files |
+| Exact overlaps 9, 23, and 0 | recomputed from the real label files |
+| Split sizes issue 1028/226/224, sentiment 1215/260/150, urgency 794/60/120 | recomputed from the real manifests, seed 42 |
+| Workbook 526,369 in and 379,575 kept | recomputed from the real workbook audit |
+| Class counts in the tables above | counts from the label files |
+| Any number that appears only in the proposal and not in these files | **reported** |
 
 ## Loader filenames
 
@@ -106,10 +113,12 @@ Point `--labels` at a directory that already uses these names:
 | `issue_retagged_clean_1500.csv` | `issue.csv` |
 | `sentiment_judgment_1500.csv` | `sentiment_hand.csv` |
 | `sentiment_binary_1500.csv` | `sentiment_platform.csv` |
-| `sentiment_test_150.csv` | `sentiment_test.csv` |
-| `urgency_train.csv` | `urgency_train.csv` |
-| `urgency_test.csv` | `urgency_test.csv` |
+| `sentiment_test_to_annotate(in).csv` | `sentiment_test.csv` |
+| `urgency_v3_train (2).csv` | `urgency_train.csv` |
+| `urgency_v3_test (2).csv` | `urgency_test.csv` |
 | `gemini_relabeled.csv` | `gemini_relabeled.csv` |
+
+The sentiment-test and urgency names include parentheses and a space. Rename them exactly. `FILE_MAP` in `src/capstone/labels.py` is the same table.
 
 `data/sample/labels/` is a fictional stand-in with the same columns. It deliberately contains a few overlaps so removal and the leakage test have a case to fire. Those planted overlaps are not the 9 and the 23.
 

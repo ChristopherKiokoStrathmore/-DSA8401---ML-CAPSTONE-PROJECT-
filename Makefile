@@ -2,11 +2,12 @@ PYTHON ?= python3
 VENV ?= .venv
 BIN := $(VENV)/bin
 
-.PHONY: install lint test smoke data labels train-baselines train-transformer evaluate real
+.PHONY: install lint test smoke data labels train-baselines train-transformer evaluate real serve-smoke
 
 CONFIG ?= configs/afroxlmr.yaml
 MANIFESTS ?= data/private/manifests
 KIND ?= data
+SERVE_PORT ?= 8765
 
 install:
 	$(PYTHON) -m venv $(VENV)
@@ -14,8 +15,8 @@ install:
 	$(BIN)/pip install -e ".[dev]"
 
 lint:
-	$(BIN)/ruff check src tests
-	$(BIN)/ruff format --check src tests
+	$(BIN)/ruff check src tests scripts
+	$(BIN)/ruff format --check src tests scripts
 
 test:
 	$(BIN)/pytest
@@ -79,3 +80,6 @@ real:
 	$(MAKE) train-baselines LABELS="$(LABELS)" MANIFESTS=data/private/manifests KIND=data
 	$(MAKE) train-transformer LABELS="$(LABELS)" MANIFESTS=data/private/manifests KIND=data CONFIG=configs/afroxlmr.yaml
 	$(MAKE) evaluate LABELS="$(LABELS)" MANIFESTS=data/private/manifests KIND=data
+
+serve-smoke:
+	SERVE_PORT=$(SERVE_PORT) BIN=$(BIN) bash scripts/serve_smoke.sh

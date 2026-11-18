@@ -1,0 +1,141 @@
+"""SHA-256 checks for the AfroXLMR download. No network and no real weights."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import zipfile
+from pathlib import Path
+
+import pytest
+
+from capstone.weights import (
+    is_google_drive_url,
+    is_placeholder_url,
+    main,
+    parse_sha256_file,
+)
+
+
+def _sha(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def test_google_drive_urls() -> None:
+    assert is_google_drive_url("https://drive.google.com/file/d/abc/view?usp=sharing")
+    assert is_google_drive_url("https://drive.google.com/uc?id=abc")
+    assert is_google_drive_url("https://docs.google.com/uc?export=download&id=abc")
+    assert not is_google_drive_url("https://example.com/afroxlmr.pt")
+    assert is_placeholder_url("https://drive.google.com/file/d/PLACEHOLDER/view")
+    assert not is_placeholder_url("https://drive.google.com/file/d/abc123/view")
+
+
+def test_placeholder_url_fails_before_download(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    sha = tmp_path / "weights.sha256"
+    sha.write_text("0" * 64 + "  afroxlmr.pt\n", encoding="utf-8")
+    config = tmp_path / "weights.json"
+    config.write_text(
+        json.dumps(
+            {
+                "url": "https://drive.google.com/file/d/PLACEHOLDER/view?usp=sharing",
+                "sha256_file": str(sha),
+                "out_dir": str(tmp_path / "out"),
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(SystemExit) as exc:
+        main(["--config", str(config)])
+    assert exc.value.code == 1
+    assert "placeholder" in capsys.readouterr().err.lower()
+    assert not (tmp_path / "out").exists()
+
+
+def test_matching_download_is_kept(tmp_path: Path) -> None:
+    payload = b"afroxlmr-synthetic-bytes"
+    source = tmp_path / "source.pt"
+    source.write_bytes(payload)
+    sha = tmp_path / "weights.sha256"
+    sha.write_text(f"# comment\n{_sha(payload)}  afroxlmr.pt\n", encoding="utf-8")
+    out = tmp_path / "out"
+    main(["--url", source.as_uri(), "--sha256", str(sha), "--out", str(out)])
+    assert (out / "afroxlmr.pt").read_bytes() == payload
+    assert not (out / ".partial-download").exists()
+
+
+def test_mismatch_is_loud_and_deletes_the_download(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"not-the-checkpoint")
+    sha = tmp_path / "weights.sha256"
+    sha.write_text(f"{'ab' * 32}  afroxlmr.pt\n", encoding="utf-8")
+    out = tmp_path / "out"
+    with pytest.raises(SystemExit) as exc:
+        main(["--url", source.as_uri(), "--sha256", str(sha), "--out", str(out)])
+    assert exc.value.code == 1
+    err = capsys.readouterr().err
+    assert "mismatch" in err.lower()
+    assert "ab" * 32 in err
+    assert not (out / "afroxlmr.pt").exists()
+    assert not (out / ".partial-download").exists()
+
+
+def test_zero_digest_mismatch_names_the_placeholder(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    source = tmp_path / "source.pt"
+    source.write_bytes(b"real-bytes")
+    sha = tmp_path / "weights.sha256"
+    sha.write_text("0" * 64 + "  afroxlmr.pt\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        main(["--url", source.as_uri(), "--sha256", str(sha), "--out", str(tmp_path / "out")])
+    assert "placeholder" in capsys.readouterr().err.lower()
+
+
+def test_zip_members_are_verified_before_extract(tmp_path: Path) -> None:
+    model = b"model-bytes"
+    config = b'{"ok":true}'
+    archive_path = tmp_path / "bundle.zip"
+    with zipfile.ZipFile(archive_path, "w") as archive:
+        archive.writestr("subdir/model.pt", model)
+        archive.writestr("config.json", config)
+    sha = tmp_path / "weights.sha256"
+    sha.write_text(
+        f"{_sha(model)}  subdir/model.pt\n{_sha(config)}  config.json\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "out"
+    main(["--url", archive_path.as_uri(), "--sha256", str(sha), "--out", str(out)])
+    assert (out / "subdir" / "model.pt").read_bytes() == model
+    assert (out / "config.json").read_bytes() == config
+
+
+def test_zip_mismatch_writes_nothing(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    archive_path = tmp_path / "bundle.zip"
+    with zipfile.ZipFile(archive_path, "w") as archive:
+        archive.writestr("model.pt", b"one")
+        archive.writestr("config.json", b"two")
+    sha = tmp_path / "weights.sha256"
+    sha.write_text(
+        f"{_sha(b'one')}  model.pt\n{'cd' * 32}  config.json\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "out"
+    with pytest.raises(SystemExit) as exc:
+        main(["--url", archive_path.as_uri(), "--sha256", str(sha), "--out", str(out)])
+    assert exc.value.code == 1
+    assert "mismatch" in capsys.readouterr().err.lower()
+    assert not (out / "model.pt").exists()
+    assert not (out / "config.json").exists()
+
+
+def test_unsafe_filename_is_rejected(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    sha = tmp_path / "weights.sha256"
+    sha.write_text(f"{'ab' * 32}  ../escape.pt\n", encoding="utf-8")
+    with pytest.raises(SystemExit) as exc:
+        parse_sha256_file(sha)
+    assert exc.value.code == 1
+    assert "unsafe" in capsys.readouterr().err.lower()

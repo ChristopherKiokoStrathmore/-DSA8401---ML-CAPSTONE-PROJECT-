@@ -23,3 +23,13 @@ build/
 # node (not used in this phase; never commit these)
 node_modules/
 .next/
+
+# trained fixtures, downloaded weights, and smoke logs
+artifacts/tfidf/
+artifacts/transformer/*
+!artifacts/transformer/
+!artifacts/transformer/weights.sha256
+artifacts/serve-smoke.log
+*.pt
+*.safetensors
+*.joblib

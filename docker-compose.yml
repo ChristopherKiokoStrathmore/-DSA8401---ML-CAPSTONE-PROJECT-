@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_BACKEND: ${MODEL_BACKEND:-tfidf}
+      TFIDF_DIR: /app/artifacts/tfidf
+      TRANSFORMER_DIR: /app/artifacts/transformer
+    volumes:
+      - artifacts:/app/artifacts
+
+volumes:
+  artifacts:

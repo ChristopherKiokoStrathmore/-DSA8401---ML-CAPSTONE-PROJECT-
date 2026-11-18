@@ -9,6 +9,9 @@ description = "DSA 8401 capstone: Airtel Kenya multi-head message pipeline"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "fastapi==0.163.2",
+    "gdown==6.5.1",
+    "joblib==1.6.0",
     "matplotlib==3.9.2",
     "numpy==2.1.3",
     "openpyxl==3.1.5",
@@ -19,10 +22,12 @@ dependencies = [
     "scipy==1.14.1",
     "torch==2.5.1",
     "transformers==4.46.3",
+    "uvicorn==0.54.0",
 ]
 
 [project.optional-dependencies]
 dev = [
+    "httpx==0.28.1",
     "pytest==8.3.4",
     "ruff==0.8.6",
 ]
@@ -30,6 +35,7 @@ dev = [
 [project.scripts]
 prepare-data = "capstone.prepare_data:main"
 generate-sample = "capstone.generate_sample:main"
+download-weights = "capstone.weights:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -37,7 +43,7 @@ where = ["src"]
 [tool.ruff]
 target-version = "py311"
 line-length = 100
-src = ["src", "tests"]
+src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

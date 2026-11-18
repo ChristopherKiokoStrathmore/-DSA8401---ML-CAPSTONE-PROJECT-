@@ -2,7 +2,11 @@ PYTHON ?= python3
 VENV ?= .venv
 BIN := $(VENV)/bin
 
-.PHONY: install lint test smoke data labels
+.PHONY: install lint test smoke data labels train-baselines train-transformer evaluate real
+
+CONFIG ?= configs/afroxlmr.yaml
+MANIFESTS ?= data/private/manifests
+KIND ?= data
 
 install:
 	$(PYTHON) -m venv $(VENV)
@@ -28,6 +32,10 @@ smoke:
 	$(BIN)/python -m capstone.agreement --labels data/sample/labels \
 		--out reports/agreement.json --kind harness
 	$(BIN)/python -m capstone.leakage --manifests reports/manifests
+	$(MAKE) train-baselines LABELS=data/sample/labels MANIFESTS=reports/manifests KIND=harness
+	$(MAKE) train-transformer LABELS=data/sample/labels MANIFESTS=reports/manifests \
+		KIND=harness CONFIG=configs/tiny.yaml TINY=1
+	$(MAKE) evaluate LABELS=data/sample/labels MANIFESTS=reports/manifests KIND=harness
 
 data:
 	@test -n "$(DATA)" || (echo "usage: make data DATA=path/to/workbook.xlsx" && exit 1)
@@ -43,3 +51,31 @@ labels:
 	$(BIN)/python -m capstone.agreement --labels "$(LABELS)" \
 		--out data/private/agreement.json --kind data
 	$(BIN)/python -m capstone.leakage --manifests data/private/manifests
+
+train-baselines:
+	@test -n "$(LABELS)" || (echo "usage: make train-baselines LABELS=... MANIFESTS=..." && exit 1)
+	$(BIN)/python -m capstone.models.baselines \
+		--labels "$(LABELS)" --manifests "$(MANIFESTS)" \
+		--out artifacts/tfidf --kind "$(KIND)" --seed 42
+
+train-transformer:
+	@test -n "$(LABELS)" || (echo "usage: make train-transformer LABELS=... MANIFESTS=..." && exit 1)
+	$(BIN)/python -m capstone.models.train \
+		--config $(CONFIG) --labels "$(LABELS)" --manifests "$(MANIFESTS)" \
+		--out artifacts/afroxlmr --kind "$(KIND)" $(if $(TINY),--tiny,)
+
+evaluate:
+	@test -n "$(LABELS)" || (echo "usage: make evaluate LABELS=... MANIFESTS=..." && exit 1)
+	$(BIN)/python -m capstone.evaluate \
+		--labels "$(LABELS)" --manifests "$(MANIFESTS)" \
+		--tfidf artifacts/tfidf --transformer artifacts/afroxlmr \
+		--baselines artifacts/baselines --out reports \
+		--errors data/private/errors.csv --kind "$(KIND)"
+
+real:
+	@test -n "$(DATA)" && test -n "$(LABELS)" || (echo "usage: make real DATA=workbook LABELS=label_dir" && exit 1)
+	$(MAKE) data DATA="$(DATA)"
+	$(MAKE) labels LABELS="$(LABELS)"
+	$(MAKE) train-baselines LABELS="$(LABELS)" MANIFESTS=data/private/manifests KIND=data
+	$(MAKE) train-transformer LABELS="$(LABELS)" MANIFESTS=data/private/manifests KIND=data CONFIG=configs/afroxlmr.yaml
+	$(MAKE) evaluate LABELS="$(LABELS)" MANIFESTS=data/private/manifests KIND=data

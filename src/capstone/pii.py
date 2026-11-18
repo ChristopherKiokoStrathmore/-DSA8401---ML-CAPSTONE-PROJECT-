@@ -71,6 +71,11 @@ _TXN_BARE = re.compile(r"\b(?=(?:[A-Z]*\d){3,})(?=(?:\d*[A-Z]){3,})[A-Z0-9]{10}\
 _TRAILING_URL_PUNCT = ".,;:!?)]}'\""
 
 
+def mask_texts(texts) -> list[str]:
+    """Mask a batch. Kept here so a saved sklearn pipeline does not point at ``__main__``."""
+    return [mask_pii("" if text is None else str(text)) for text in list(texts)]
+
+
 def mask_pii(text: str) -> str:
     """Replace PII in ``text`` with [ID], [PHONE], [URL], or [USER].
 

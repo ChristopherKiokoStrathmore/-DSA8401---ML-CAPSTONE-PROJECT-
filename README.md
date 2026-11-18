@@ -75,6 +75,31 @@ Gold is the 120-row urgency test plus the 150-row sentiment test. Exact and near
 
 `tests/test_no_leakage.py` builds those manifests from the sample and fails if any exact or near-duplicate sits in both test and train/val. `python -m capstone.leakage --manifests <dir>` is the same check for a real directory.
 
+## Models and evaluation
+
+Baselines, fitted on the training split with `C` chosen on validation only:
+
+- majority class per head
+- an emergency keyword heuristic (English, Swahili, and Sheng substrings; other heads fall back to keywords or the majority class)
+- word and character TF-IDF plus class-balanced logistic regression, one pipeline per head
+
+The TF-IDF files are `artifacts/tfidf/{issue,sentiment,urgency}.joblib` plus `artifacts/tfidf/labels.json`. Each joblib is a scikit-learn Pipeline whose `predict_proba` masks PII and then vectorises. That is the format the API loads.
+
+The multi-task model is `Davlan/afro-xlmr-base`. Embeddings and the bottom 8 of 12 layers stay frozen. The heads are issue softmax (10), sentiment softmax (2), and urgency CORN (3 ordinal levels, 2 conditional logits). A row only contributes loss for the heads it has labels for. Class weights and the urgency row weights are applied. One seed, 42. Checkpoints are written every epoch and `--resume` continues from `artifacts/afroxlmr/checkpoints/last.pt`. Early stopping watches the mean of validation issue macro-F1, sentiment macro-F1, and urgency QWK. The run is sized for one Colab T4 in fp16, about 60–90 minutes. The training log prints an ETA after the first step.
+
+`capstone.models.multitask.load_for_inference(directory).predict(texts)` returns, per text, the issue label and probabilities, the sentiment label and probability, and the urgency level, probabilities, and emergency flag. It runs on CPU. `predict` masks PII first.
+
+The emergency flag uses a threshold chosen on the urgency validation split only: maximise emergency recall subject to a false-emergency rate of at most 0.20. That threshold is applied once to the test split. `evaluate` writes `reports/results.json` and `reports/results.md` (macro-F1, per-class precision/recall/F1 with support, confusion matrices, urgency QWK, emergency recall, false-emergency rate, 95% bootstrap intervals, and paired intervals against TF-IDF). Mistakes go to `data/private/errors.csv` with a `category_hint` column. Thirty of them are marked `taxonomy_pick` for the error review. That file is git-ignored.
+
+```bash
+make train-baselines LABELS=data/sample/labels MANIFESTS=reports/manifests KIND=harness
+make train-transformer LABELS=... MANIFESTS=... CONFIG=configs/afroxlmr.yaml
+make evaluate LABELS=... MANIFESTS=... KIND=data
+make real DATA=/path/to/workbook.xlsx LABELS=/path/to/label_dir
+```
+
+`make smoke` fits the baselines, trains the tiny random encoder for one step, and evaluates the sample. Those numbers are a harness check. `colab/run_real.ipynb` is the T4 path: clone, install, upload the workbook and the seven label files, `make real`, download the report and the weights. The notebook has no saved outputs. The T4 run itself is not executed in this repository checkout.
+
 ## Privacy
 
 Do not commit `.xlsx`, `.csv`, or `.parquet` outside `data/sample/`. A test fails the suite if git is tracking one. Do not commit `.env*`, `__pycache__/`, `node_modules/`, or `.next/`. The audit prints counts only.

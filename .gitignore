@@ -1,7 +1,9 @@
-# real customer data and generated audits
+# real customer data, generated audits, and trained weights
 data/private/
 reports/**
 !reports/.gitkeep
+artifacts/**
+!artifacts/.gitkeep
 
 # secrets and environments
 .env*

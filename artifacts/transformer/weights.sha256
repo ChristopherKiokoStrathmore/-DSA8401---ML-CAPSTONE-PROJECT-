@@ -1,3 +1,5 @@
 # Colab T4 AfroXLMR-base state dict. model.pt is 1112288438 bytes.
-# The download URL is TODO_DRIVE_URL in config/weights.json until the owner pastes the Drive link.
+# A second T4 training reproduced this digest.
+# Download: https://drive.google.com/drive/folders/1Ql5b645nf9j_UhWygj7kYqH0jaWZsDl9?usp=sharing
+# The file inside that folder is afroxlmr/model.pt.
 778246a31841ac554fbf574cfc42cc9579981b67fb85a8eb1814dbb689ea9eb6  model.pt

@@ -11,10 +11,16 @@ import pytest
 
 from capstone.weights import (
     ShaEntry,
+    find_folder_member,
+    is_google_drive_folder_url,
     is_google_drive_url,
     is_placeholder_url,
     main,
     parse_sha256_file,
+)
+
+DRIVE_FOLDER = (
+    "https://drive.google.com/drive/folders/1Ql5b645nf9j_UhWygj7kYqH0jaWZsDl9?usp=sharing"
 )
 
 
@@ -27,16 +33,21 @@ def test_google_drive_urls() -> None:
     assert is_google_drive_url("https://drive.google.com/uc?id=abc")
     assert is_google_drive_url("https://docs.google.com/uc?export=download&id=abc")
     assert not is_google_drive_url("https://example.com/afroxlmr.pt")
+    assert is_google_drive_folder_url(DRIVE_FOLDER)
+    assert not is_google_drive_folder_url("https://drive.google.com/file/d/abc/view")
     assert is_placeholder_url("https://drive.google.com/file/d/PLACEHOLDER/view")
     assert is_placeholder_url("TODO_DRIVE_URL")
+    assert not is_placeholder_url(DRIVE_FOLDER)
     assert not is_placeholder_url("https://drive.google.com/file/d/abc123/view")
 
 
 def test_committed_weights_record_the_t4_digest() -> None:
     root = Path(__file__).resolve().parents[1]
     config = json.loads((root / "config" / "weights.json").read_text(encoding="utf-8"))
-    assert config["url"] == "TODO_DRIVE_URL"
-    assert is_placeholder_url(config["url"])
+    assert config["url"] == DRIVE_FOLDER
+    assert config["member"] == "afroxlmr/model.pt"
+    assert is_google_drive_folder_url(config["url"])
+    assert not is_placeholder_url(config["url"])
     entries = parse_sha256_file(root / config["sha256_file"])
     assert entries == [
         ShaEntry(
@@ -149,6 +160,75 @@ def test_zip_mismatch_writes_nothing(tmp_path: Path, capsys: pytest.CaptureFixtu
     assert "mismatch" in capsys.readouterr().err.lower()
     assert not (out / "model.pt").exists()
     assert not (out / "config.json").exists()
+
+
+def _stage_folder(output: Path, payload: bytes, nested: str = "afroxlmr/model.pt") -> None:
+    output.mkdir(parents=True, exist_ok=True)
+    path = output / nested
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(payload)
+
+
+def test_folder_member_accepts_an_extra_parent_directory(tmp_path: Path) -> None:
+    root = tmp_path / "download"
+    _stage_folder(root / "Shared folder", b"weights", "afroxlmr/model.pt")
+    found = find_folder_member(root, "afroxlmr/model.pt")
+    assert found.read_bytes() == b"weights"
+
+
+def test_folder_url_keeps_the_matching_member(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = b"checkpoint-bytes"
+
+    def fake_folder(url: str, output: Path) -> None:
+        assert "folders" in url
+        _stage_folder(output / "Shared folder", payload)
+
+    monkeypatch.setattr("capstone.weights._gdown_folder", fake_folder)
+    sha = tmp_path / "weights.sha256"
+    sha.write_text(f"{_sha(payload)}  model.pt\n", encoding="utf-8")
+    out = tmp_path / "out"
+    main(["--url", DRIVE_FOLDER, "--sha256", str(sha), "--out", str(out)])
+    assert (out / "model.pt").read_bytes() == payload
+    assert not (out / ".partial-download").exists()
+    assert not (out / ".drive-folder").exists()
+
+
+def test_folder_url_rejects_a_bad_digest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def fake_folder(url: str, output: Path) -> None:
+        _stage_folder(output, b"not-the-checkpoint")
+
+    monkeypatch.setattr("capstone.weights._gdown_folder", fake_folder)
+    sha = tmp_path / "weights.sha256"
+    sha.write_text(f"{'ab' * 32}  model.pt\n", encoding="utf-8")
+    out = tmp_path / "out"
+    with pytest.raises(SystemExit) as exc:
+        main(["--url", DRIVE_FOLDER, "--sha256", str(sha), "--out", str(out)])
+    assert exc.value.code == 1
+    assert "mismatch" in capsys.readouterr().err.lower()
+    assert not (out / "model.pt").exists()
+    assert not (out / ".drive-folder").exists()
+
+
+def test_folder_url_fails_when_the_member_is_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def fake_folder(url: str, output: Path) -> None:
+        output.mkdir(parents=True, exist_ok=True)
+        (output / "readme.txt").write_text("no weights", encoding="utf-8")
+
+    monkeypatch.setattr("capstone.weights._gdown_folder", fake_folder)
+    sha = tmp_path / "weights.sha256"
+    sha.write_text(f"{'ab' * 32}  model.pt\n", encoding="utf-8")
+    out = tmp_path / "out"
+    with pytest.raises(SystemExit) as exc:
+        main(["--url", DRIVE_FOLDER, "--sha256", str(sha), "--out", str(out)])
+    assert exc.value.code == 1
+    assert "afroxlmr/model.pt" in capsys.readouterr().err
+    assert not (out / "model.pt").exists()
 
 
 def test_unsafe_filename_is_rejected(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

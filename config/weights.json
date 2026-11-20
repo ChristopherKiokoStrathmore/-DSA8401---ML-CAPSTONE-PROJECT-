@@ -1,5 +1,6 @@
 {
-  "url": "TODO_DRIVE_URL",
+  "url": "https://drive.google.com/drive/folders/1Ql5b645nf9j_UhWygj7kYqH0jaWZsDl9?usp=sharing",
+  "member": "afroxlmr/model.pt",
   "sha256": "778246a31841ac554fbf574cfc42cc9579981b67fb85a8eb1814dbb689ea9eb6",
   "bytes": 1112288438,
   "filename": "model.pt",

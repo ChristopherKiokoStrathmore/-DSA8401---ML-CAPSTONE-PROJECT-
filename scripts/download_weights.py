@@ -4,11 +4,11 @@
 Run from the repo root after ``make install``:
 
     python scripts/download_weights.py
-    AFROXLMR_WEIGHTS_URL=<public-drive-url> python scripts/download_weights.py
 
-The committed digest is the real T4 ``model.pt``. The committed URL is
-``TODO_DRIVE_URL`` and exits 1 before any download. A hash mismatch deletes
-the partial file and exits 1.
+The committed URL is the public Drive folder. The script downloads that folder
+with gdown and keeps ``afroxlmr/model.pt``, then checks the SHA-256. A file
+URL still works. A placeholder URL exits 1 before any download. A hash
+mismatch deletes the partial file and exits 1.
 """
 
 from capstone.weights import main

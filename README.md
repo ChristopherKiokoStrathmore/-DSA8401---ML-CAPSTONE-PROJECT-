@@ -38,7 +38,7 @@ make real DATA=/path/to/workbook.xlsx LABELS=/path/to/label_dir
 
 That runs prepare, splits, baselines, AfroXLMR training, and evaluation. Outputs land in `data/private/`, `reports/`, and `artifacts/`. Do not commit them.
 
-Colab T4: open `colab/run_real.ipynb`. It clones `main`, installs, uploads a labels-and-manifests bundle, fits baselines, trains, evaluates, prints the SHA-256, and zips the report and the weights. The notebook stores no outputs.
+Colab T4 retrain: open `colab/retrain_drive.ipynb`. It clones `main`, installs with `pip install -e '.[dev]'` (no virtualenv; Colab has no `ensurepip`), mounts Drive, uploads a labels-and-manifests bundle, and trains with `--resume`. After every epoch it copies `checkpoints/last.pt` to `/content/drive/MyDrive/afroxlmr/`. The notebook stores no outputs.
 
 The T4 run is already recorded. Seed 42, 6 of 6 epochs, 1,140 steps, about 25 minutes, no early stop. Epoch-6 validation: issue macro-F1 0.5819, sentiment macro-F1 0.8935, urgency QWK 0.5817. The emergency threshold chosen on validation is 0.50 (recall 0.810, false-emergency rate 0.179). Test macro-F1 is issue 0.656, sentiment 0.800, urgency 0.687, each above TF-IDF, with paired intervals that include zero. Full tables, the learning curve, and the three confusion matrices are in `report/report.md` and `reports/`. Smoke numbers are still harness checks.
 
@@ -107,13 +107,15 @@ AfroXLMR weights are not in git. The T4 `model.pt` is 1,112,288,438 bytes. SHA-2
 778246a31841ac554fbf574cfc42cc9579981b67fb85a8eb1814dbb689ea9eb6
 ```
 
-That digest is in `artifacts/transformer/weights.sha256` and `config/weights.json`. The URL in the config is `TODO_DRIVE_URL` until the owner pastes the Drive link. The script refuses that URL before any download.
+That digest is in `artifacts/transformer/weights.sha256` and `config/weights.json`. A second Colab T4 training reproduced it. The file is `afroxlmr/model.pt` in this Drive folder:
+
+https://drive.google.com/drive/folders/1Ql5b645nf9j_UhWygj7kYqH0jaWZsDl9?usp=sharing
 
 ```bash
-AFROXLMR_WEIGHTS_URL='https://drive.google.com/file/d/<id>/view' python scripts/download_weights.py
+python scripts/download_weights.py
 ```
 
-`WEIGHTS_URL` is an alias. A Drive link uses gdown. Any other URL uses urllib. The script checks the file against the SHA-256 and deletes a mismatch. Training also writes `artifacts/afroxlmr/sha256.txt` for the state dict it just saved.
+A folder link is downloaded with gdown and only `afroxlmr/model.pt` is kept. A file link still works (`AFROXLMR_WEIGHTS_URL` or `WEIGHTS_URL`). Any other URL uses urllib. The script checks the file against the SHA-256 and deletes a mismatch. A placeholder URL is refused before any download. Training also writes `artifacts/afroxlmr/sha256.txt` for the state dict it just saved.
 
 ## Layout
 
@@ -134,7 +136,7 @@ reports/afroxlmr_run/           curves.json and threshold.json from the T4 run
 docs/label_rubric.md            classes, provenance, recomputed agreement
 docs/technique_justification.md one row per syllabus area
 report/report.md                the capstone report
-colab/run_real.ipynb            T4 notebook, no stored outputs
+colab/retrain_drive.ipynb       T4 retrain with Drive resume, no stored outputs
 data/sample/                    fictional workbook and labels, seed 42
 data/private/                   git-ignored real data
 ```

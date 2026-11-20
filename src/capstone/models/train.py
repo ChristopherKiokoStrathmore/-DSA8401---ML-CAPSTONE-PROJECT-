@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import json
 import random
+import shutil
 import time
 from pathlib import Path
 
@@ -64,6 +65,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--tiny", action="store_true", help="Random tiny encoder, no download.")
     parser.add_argument("--max-steps", type=int, default=None)
     parser.add_argument("--resume", action="store_true")
+    parser.add_argument(
+        "--mirror",
+        type=Path,
+        default=None,
+        help="Copy checkpoints/last.pt here after every epoch.",
+    )
     parser.add_argument("--kind", choices=("harness", "data"), default="data")
     args = parser.parse_args(argv)
     config = yaml.safe_load(args.config.read_text(encoding="utf-8"))
@@ -72,7 +79,15 @@ def main(argv: list[str] | None = None) -> int:
         config["max_steps"] = args.max_steps if args.max_steps is not None else 1
     elif args.max_steps is not None:
         config["max_steps"] = args.max_steps
-    train(config, args.labels, args.manifests, args.out, resume=args.resume, kind=args.kind)
+    train(
+        config,
+        args.labels,
+        args.manifests,
+        args.out,
+        resume=args.resume,
+        kind=args.kind,
+        mirror=args.mirror,
+    )
     return 0
 
 
@@ -84,6 +99,7 @@ def train(
     *,
     resume: bool = False,
     kind: str = "data",
+    mirror: Path | None = None,
 ) -> dict:
     seed = int(config.get("seed", SEED))
     _set_seed(seed)
@@ -236,6 +252,7 @@ def train(
             best_state=best_state,
             history=history,
         )
+        _mirror_checkpoint(checkpoint_dir / "last.pt", mirror)
         if stop or (max_steps is None and stall >= patience):
             if stall >= patience and max_steps is None:
                 print(f"early_stop patience={patience} best_val_mean={best_score:.4f}")
@@ -386,6 +403,17 @@ def _export(
         "encoder": encoder_config,
     }
     return save_inference_checkpoint(model, tokenizer, payload, out_dir)
+
+
+def _mirror_checkpoint(source: Path, mirror_dir: Path | None) -> None:
+    if mirror_dir is None:
+        return
+    mirror_dir.mkdir(parents=True, exist_ok=True)
+    target = mirror_dir / source.name
+    temporary = mirror_dir / f".{source.name}.partial"
+    shutil.copy2(source, temporary)
+    temporary.replace(target)
+    print(f"mirrored {source.name} -> {target}")
 
 
 def _write_checkpoint(epoch_path, last_path, model, optimizer, scaler, **payload) -> None:

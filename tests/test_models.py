@@ -168,9 +168,12 @@ def test_tfidf_pipeline_and_tiny_checkpoint_roundtrip(tmp_path: Path) -> None:
 
     config = yaml.safe_load(Path("configs/tiny.yaml").read_text(encoding="utf-8"))
     out = tmp_path / "afroxlmr"
-    first = train(config, labels, manifests, out, kind="harness")
+    mirror = tmp_path / "drive"
+    first = train(config, labels, manifests, out, kind="harness", mirror=mirror)
     assert first["steps"] == 1
     assert (out / "sha256.txt").is_file()
+    assert (mirror / "last.pt").read_bytes() == (out / "checkpoints" / "last.pt").read_bytes()
+    assert not (mirror / ".last.pt.partial").exists()
     second = train(config | {"max_steps": 2}, labels, manifests, out, resume=True, kind="harness")
     assert second["steps"] == 2
     predictor = load_for_inference(out)

@@ -20,7 +20,7 @@ The app derives all three endpoints from it:
 
 If the variable is unset, the page still renders the demo chrome plus a configuration notice. Classify stays disabled until the URL is set.
 
-This copy serves the FastAPI app in the parent repository. The host is Railway. The submission still uses the placeholder `LIVE_DEMO_URL` until a domain is generated. Set `NEXT_PUBLIC_API_URL` to that Railway URL. A Hugging Face Docker Space needs a PRO plan (free Docker Spaces return 402). The commands are in `../../deploy/README.md`. Do not append `/predict`.
+This copy serves the FastAPI app in the parent repository. The live page is https://dsa-8401-ml-capstone-project.vercel.app/ and `NEXT_PUBLIC_API_URL` is https://api-production-09d942cd.up.railway.app. A Hugging Face Docker Space needs a PRO plan (free Docker Spaces return 402). The commands are in `../../deploy/README.md`. Do not append `/predict`.
 
 `NEXT_PUBLIC_*` values are inlined at build time, not read at runtime. Changing the value in Vercel has no effect until you redeploy. If you update the URL and the site still calls the old host, that is why.
 
@@ -32,7 +32,7 @@ Local development uses the same key in `.env.local`. See the README for `npm run
 2. Go to Settings, then Environment Variables.
 3. Add:
    - Key: `NEXT_PUBLIC_API_URL`
-   - Value: the Railway URL (no `/predict` suffix)
+   - Value: `https://api-production-09d942cd.up.railway.app` (no `/predict` suffix)
    - Environments: Production, Preview, and Development
 4. Save, then open Deployments, open the latest one, and choose Redeploy. The variable is baked into the client bundle at build time, so an existing deployment will not pick it up on its own.
 
@@ -67,7 +67,7 @@ The live production demo is [https://multi-head.vercel.app](https://multi-head.v
 The browser calls the model API directly from the Vercel domain. That is a cross-origin request, so the API must return CORS headers that permit it:
 
 ```
-Access-Control-Allow-Origin: https://<your-app>.vercel.app
+Access-Control-Allow-Origin: https://dsa-8401-ml-capstone-project.vercel.app
 Access-Control-Allow-Headers: Content-Type
 Access-Control-Allow-Methods: GET, POST, OPTIONS
 ```

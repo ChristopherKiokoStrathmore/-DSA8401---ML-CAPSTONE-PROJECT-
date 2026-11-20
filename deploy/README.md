@@ -1,6 +1,6 @@
 # Deploy
 
-The live service is Railway Hobby. The cover still says `LIVE_DEMO_URL` until a domain is generated. This checkout does not deploy it. NOT VERIFIED.
+The live frontend is https://dsa-8401-ml-capstone-project.vercel.app/ and the API is https://api-production-09d942cd.up.railway.app.
 
 ## Railway
 
@@ -14,20 +14,20 @@ The container needs about 3 GB of RAM. `model.pt` is 1.1 GB, and one CPU torch p
 4. Set variables:
    - `MODEL_BACKEND=transformer`
    - `WEIGHTS_DIR=/data`
-   - `CORS_ORIGINS=*` (or the Vercel origin)
+   - `CORS_ORIGINS=*` (this already allows https://dsa-8401-ml-capstone-project.vercel.app)
 5. Generate Domain.
 6. Wait for `/health` to become `ok`. The first start lists the Drive folder and downloads only `afroxlmr/` (`model.pt` and the tokenizer files), then checks the SHA-256. `last.pt.tmp` and `reports/` are not fetched. A later start skips the download when `model.pt` already matches.
 
 ```bash
-curl -s "https://<railway-domain>/health"
-curl -s -X POST "https://<railway-domain>/predict" \
+curl -s "https://api-production-09d942cd.up.railway.app/health"
+curl -s -X POST "https://api-production-09d942cd.up.railway.app/predict" \
   -H 'content-type: application/json' \
   -d '{"text":"My line has been down since morning, please help"}'
 ```
 
 ### Frontend
 
-Vercel: import this repository, set the root directory to `frontend`, set `NEXT_PUBLIC_API_URL` to the Railway URL with no `/predict` suffix, and redeploy.
+Vercel: the live app is https://dsa-8401-ml-capstone-project.vercel.app/ with root directory `frontend` and `NEXT_PUBLIC_API_URL` set to https://api-production-09d942cd.up.railway.app (no `/predict` suffix).
 
 Or add a second Railway service from the same repo with root directory `frontend` and the same `NEXT_PUBLIC_API_URL`.
 

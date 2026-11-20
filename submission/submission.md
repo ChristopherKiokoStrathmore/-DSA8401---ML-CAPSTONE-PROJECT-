@@ -12,4 +12,6 @@ Repository: https://github.com/ChristopherKiokoStrathmore/-DSA8401---ML-CAPSTONE
 
 Report: https://github.com/ChristopherKiokoStrathmore/-DSA8401---ML-CAPSTONE-PROJECT-/blob/main/report/report.pdf
 
-Live demo: LIVE_DEMO_URL
+Frontend: https://dsa-8401-ml-capstone-project.vercel.app/
+
+API: https://api-production-09d942cd.up.railway.app

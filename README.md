@@ -160,8 +160,10 @@ Do not commit `.xlsx`, `.csv`, or `.parquet` outside `data/sample/`. Do not comm
 
 The browser UI is `frontend/`, copied from [MULTI-HEAD-](https://github.com/ChristopherKiokoStrathmore/MULTI-HEAD-). `NEXT_PUBLIC_API_URL` is the FastAPI base URL. The page calls `/health`, `/predict`, and `/predict_batch`. The JSON shapes match `lib/types.ts` and `src/capstone/serving/schemas.py`.
 
-Hosting is Railway Hobby. `railway.json` builds the root `Dockerfile`, checks `/health` (15 minute timeout, so the first-start download can finish), and restarts on failure. Add a volume at `/data`, set `MODEL_BACKEND=transformer`, `WEIGHTS_DIR=/data`, and `CORS_ORIGINS`, then generate a domain. The process needs about 3 GB of RAM. The checkpoint is 1.1 GB. Steps are in `deploy/README.md`. The cover still says `LIVE_DEMO_URL` until that domain exists.
+The live frontend is https://dsa-8401-ml-capstone-project.vercel.app/ and the API is https://api-production-09d942cd.up.railway.app.
 
-The frontend stays on Vercel with root `frontend` and `NEXT_PUBLIC_API_URL` set to the Railway URL, or as a second Railway service with the same root directory.
+Hosting is Railway Hobby. `railway.json` builds the root `Dockerfile`, checks `/health` (15 minute timeout, so the first-start download can finish), and restarts on failure. The service has a volume at `/data`, `MODEL_BACKEND=transformer`, `WEIGHTS_DIR=/data`, and `CORS_ORIGINS` (the default `*` already allows https://dsa-8401-ml-capstone-project.vercel.app). The process needs about 3 GB of RAM. The checkpoint is 1.1 GB. Steps are in `deploy/README.md`.
+
+The frontend is on Vercel with root `frontend` and `NEXT_PUBLIC_API_URL` set to the Railway URL. A second Railway service with that root directory is the other option.
 
 A Hugging Face Docker Space (`deploy/hf_space/`, `Kioko1/airtel-multihead`) is optional. Free Docker Spaces return HTTP 402 and need a PRO plan. `make hf-space` is unchanged.

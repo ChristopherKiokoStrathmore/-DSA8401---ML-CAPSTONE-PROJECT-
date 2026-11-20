@@ -5,10 +5,12 @@ Run from the repo root after ``make install``:
 
     python scripts/download_weights.py
 
-The committed URL is the public Drive folder. The script downloads that folder
-with gdown and keeps ``afroxlmr/model.pt``, then checks the SHA-256. A file
-URL still works. A placeholder URL exits 1 before any download. A hash
-mismatch deletes the partial file and exits 1.
+The committed URL is the public Drive folder. The script lists it and
+downloads only ``afroxlmr/`` (``model.pt`` and the tokenizer files), then
+checks the SHA-256. ``last.pt.tmp`` and ``reports/`` are not fetched. A file
+that already matches is skipped. A file URL still works. A placeholder URL
+exits 1 before any download. A hash mismatch deletes the partial file and
+exits 1. ``WEIGHTS_DIR`` sets the output directory.
 """
 
 from capstone.weights import main

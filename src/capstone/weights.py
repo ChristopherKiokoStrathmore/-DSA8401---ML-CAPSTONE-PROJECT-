@@ -2,8 +2,11 @@
 
 The URL comes from ``AFROXLMR_WEIGHTS_URL`` or ``WEIGHTS_URL``, then from
 ``config/weights.json``. A Google Drive file link is fetched with gdown.
-A Google Drive folder link is fetched with ``gdown.download_folder``, then
-``afroxlmr/model.pt`` (or ``config["member"]``) is the file that is hashed.
+A Google Drive folder is listed first. Only files inside ``afroxlmr/`` are
+fetched (``model.pt`` plus the tokenizer files). ``last.pt.tmp``, ``reports/``,
+and anything else in the folder are not downloaded. ``model.pt`` is then
+hashed. If that file is already present and the digest matches, the download
+is skipped.
 Anything else is fetched with urllib, including ``file://`` for tests.
 
 ``weights.sha256`` is the usual sha256sum layout: ``<digest>  <filename>``,
@@ -25,13 +28,12 @@ import hashlib
 import hmac
 import json
 import os
-import shutil
 import sys
 import urllib.parse
 import urllib.request
 import zipfile
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 _PLACEHOLDER_MARKERS = ("placeholder", "replace_me", "todo_drive_url")
 _DEFAULT_MEMBER = "afroxlmr/model.pt"
@@ -159,6 +161,7 @@ def resolve_settings(
     )
     out_raw = (
         out_dir
+        or _env_path(environ, "WEIGHTS_DIR")
         or _env_path(environ, "AFROXLMR_WEIGHTS_DIR")
         or _maybe_path(config.get("out_dir"))
         or (find_root() / "artifacts" / "transformer")
@@ -169,6 +172,48 @@ def resolve_settings(
     if chosen_url == "":
         fail("No AfroXLMR weights URL. Set AFROXLMR_WEIGHTS_URL or edit config/weights.json.")
     return chosen_url, _resolve(sha_raw), _resolve(out_raw), member
+
+
+def afroxlmr_relative(path: str) -> str | None:
+    """Path inside an ``afroxlmr`` directory, or None when the file is elsewhere."""
+    parts = PurePosixPath(path.replace("\\", "/")).parts
+    if "afroxlmr" not in parts:
+        return None
+    rest = parts[parts.index("afroxlmr") + 1 :]
+    if not rest or any(part in {"", ".", ".."} for part in rest):
+        return None
+    return "/".join(rest)
+
+
+def select_afroxlmr_paths(paths: list[str]) -> list[str]:
+    """Keep Drive paths that live under ``afroxlmr/`` and drop the rest."""
+    return [path for path in paths if afroxlmr_relative(path) is not None]
+
+
+def plan_afroxlmr_downloads(
+    files: list[tuple[str, str]],
+    member: str,
+) -> tuple[tuple[str, str], list[tuple[str, str]]]:
+    """Split a Drive listing into the checkpoint and the other afroxlmr files.
+
+    ``files`` is ``(file_id, path)``. Paths outside ``afroxlmr/`` are ignored,
+    including a sibling ``last.pt.tmp`` and a ``reports/`` directory.
+    """
+    chosen: list[tuple[str, str]] = []
+    for file_id, path in files:
+        relative = afroxlmr_relative(path)
+        if relative is None:
+            continue
+        chosen.append((file_id, relative))
+    want = afroxlmr_relative(member) or PurePosixPath(member).name
+    models = [item for item in chosen if item[1] == want]
+    if len(models) != 1:
+        fail(
+            f"Drive folder listing has {len(models)} files for {member}. "
+            "Expected one afroxlmr checkpoint. Nothing was written."
+        )
+    others = [item for item in chosen if item[1] != want]
+    return models[0], others
 
 
 def find_folder_member(root: Path, member: str) -> Path:
@@ -193,10 +238,11 @@ def find_folder_member(root: Path, member: str) -> Path:
 
 
 def download(url: str, dest: Path, *, member: str = _DEFAULT_MEMBER) -> None:
+    """Download one file. Folder URLs are handled in :func:`run`."""
+    del member
     dest.parent.mkdir(parents=True, exist_ok=True)
     if is_google_drive_folder_url(url):
-        _download_drive_folder(url, dest, member)
-        return
+        fail("internal error: folder URLs are downloaded by run(), not download()")
     if is_google_drive_url(url):
         try:
             import gdown
@@ -279,6 +325,9 @@ def run(
             "Refusing to download."
         )
     entries = parse_sha256_file(sha_path)
+    if len(entries) == 1 and _sha_matches(destination / entries[0].name, entries[0]):
+        print(f"{entries[0].name} already matches the SHA-256; skipping download")
+        return
     if is_google_drive_folder_url(chosen_url) and len(entries) != 1:
         fail(
             "A Drive folder download keeps one member. "
@@ -287,8 +336,15 @@ def run(
     destination.mkdir(parents=True, exist_ok=True)
     partial = destination / ".partial-download"
     try:
-        download(chosen_url, partial, member=member)
+        siblings: list[tuple[str, str]] = []
+        if is_google_drive_folder_url(chosen_url):
+            model, siblings = plan_afroxlmr_downloads(_list_drive_files(chosen_url), member)
+            _download_drive_file(model[0], partial)
+        else:
+            download(chosen_url, partial, member=member)
         install_download(partial, entries, destination)
+        for file_id, relative in siblings:
+            _download_drive_file(file_id, destination / relative)
     except SystemExit:
         partial.unlink(missing_ok=True)
         raise
@@ -311,39 +367,46 @@ def main(argv: list[str] | None = None) -> None:
     run(url=args.url, sha256_path=args.sha256, out_dir=args.out, config_path=args.config)
 
 
-def _gdown_folder(url: str, output: Path) -> None:
+def _list_drive_files(url: str) -> list[tuple[str, str]]:
+    """List a Drive folder. This does not download file bytes."""
     try:
         import gdown
     except ImportError:
         fail("gdown is required to download a Google Drive folder. Install the package and retry.")
     try:
-        result = gdown.download_folder(url=url, output=str(output), quiet=False)
+        listed = gdown.download_folder(url=url, skip_download=True, quiet=True)
     except Exception as exc:
-        fail(f"gdown folder download failed for {display_url(url)}: {type(exc).__name__}: {exc}")
-    if not result:
-        fail(f"gdown did not download any files from {display_url(url)}")
+        fail(f"gdown folder listing failed for {display_url(url)}: {type(exc).__name__}: {exc}")
+    if not listed:
+        fail(f"gdown listed no files in {display_url(url)}")
+    return [(str(item.id), str(item.path).replace("\\", "/")) for item in listed]
 
 
-def _download_drive_folder(url: str, dest: Path, member: str) -> None:
-    staging = dest.parent / ".drive-folder"
-    if staging.exists():
-        shutil.rmtree(staging)
-    staging.mkdir(parents=True)
+def _download_drive_file(file_id: str, dest: Path) -> None:
     try:
-        _gdown_folder(url, staging)
-        picked = find_folder_member(staging, member)
-        shutil.copyfile(picked, dest)
-    except SystemExit:
-        dest.unlink(missing_ok=True)
-        raise
+        import gdown
+    except ImportError:
+        fail("gdown is required to download a Google Drive file. Install the package and retry.")
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        result = gdown.download(
+            url="https://drive.google.com/uc?id=" + file_id,
+            output=str(dest),
+            quiet=True,
+            fuzzy=True,
+        )
     except Exception as exc:
         dest.unlink(missing_ok=True)
-        fail(f"Drive folder download failed for {display_url(url)}: {type(exc).__name__}: {exc}")
-    finally:
-        shutil.rmtree(staging, ignore_errors=True)
-    if not dest.is_file() or dest.stat().st_size == 0:
+        fail(f"gdown failed for file {file_id}: {type(exc).__name__}: {exc}")
+    if not result or not dest.is_file() or dest.stat().st_size == 0:
         dest.unlink(missing_ok=True)
-        fail(f"Drive folder download did not produce {member}")
+        fail(f"gdown did not write {dest.name}")
+
+
+def _sha_matches(path: Path, entry: ShaEntry) -> bool:
+    if not path.is_file():
+        return False
+    return hmac.compare_digest(sha256_file(path), entry.digest)
 
 
 def _check_digest(actual: str, entry: ShaEntry) -> None:

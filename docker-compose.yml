@@ -5,8 +5,10 @@ services:
       - "8000:8000"
     environment:
       MODEL_BACKEND: ${MODEL_BACKEND:-tfidf}
+      PORT: ${PORT:-8000}
       TFIDF_DIR: /app/artifacts/tfidf
-      TRANSFORMER_DIR: /app/artifacts/transformer
+      WEIGHTS_DIR: ${WEIGHTS_DIR:-/app/artifacts/transformer}
+      TRANSFORMER_DIR: ${TRANSFORMER_DIR:-/app/artifacts/transformer}
     volumes:
       - artifacts:/app/artifacts
 

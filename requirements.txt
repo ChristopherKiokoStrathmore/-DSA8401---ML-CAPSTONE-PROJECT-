@@ -13,6 +13,8 @@ pyyaml==6.0.2
 ruff==0.8.6
 scikit-learn==1.5.2
 scipy==1.14.1
+# Pinned for the Docker image and the Colab T4 run. pyproject allows torch>=2.5.1
+# so a local Python 3.13 install can resolve a wheel. Do not bump this for training.
 torch==2.5.1
 transformers==4.46.3
 uvicorn==0.54.0

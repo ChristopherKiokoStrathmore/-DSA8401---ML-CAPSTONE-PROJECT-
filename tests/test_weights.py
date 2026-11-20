@@ -17,6 +17,8 @@ from capstone.weights import (
     is_placeholder_url,
     main,
     parse_sha256_file,
+    plan_afroxlmr_downloads,
+    select_afroxlmr_paths,
 )
 
 DRIVE_FOLDER = (
@@ -169,6 +171,27 @@ def _stage_folder(output: Path, payload: bytes, nested: str = "afroxlmr/model.pt
     path.write_bytes(payload)
 
 
+def _patch_listing(
+    monkeypatch: pytest.MonkeyPatch,
+    files: list[tuple[str, str]],
+    payloads: dict[str, bytes],
+) -> list[str]:
+    fetched: list[str] = []
+
+    def fake_list(url: str) -> list[tuple[str, str]]:
+        assert "folders" in url
+        return files
+
+    def fake_download(file_id: str, dest: Path) -> None:
+        fetched.append(file_id)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(payloads[file_id])
+
+    monkeypatch.setattr("capstone.weights._list_drive_files", fake_list)
+    monkeypatch.setattr("capstone.weights._download_drive_file", fake_download)
+    return fetched
+
+
 def test_folder_member_accepts_an_extra_parent_directory(tmp_path: Path) -> None:
     root = tmp_path / "download"
     _stage_folder(root / "Shared folder", b"weights", "afroxlmr/model.pt")
@@ -176,32 +199,103 @@ def test_folder_member_accepts_an_extra_parent_directory(tmp_path: Path) -> None
     assert found.read_bytes() == b"weights"
 
 
+def test_select_afroxlmr_paths_drops_tmp_and_reports() -> None:
+    paths = [
+        "last.pt.tmp",
+        "reports/results.md",
+        "reports/figures/issue.png",
+        "afroxlmr/model.pt",
+        "afroxlmr/tokenizer.json",
+        "afroxlmr/tokenizer_config.json",
+        "afroxlmr/config.json",
+        "Drive folder/afroxlmr/special_tokens_map.json",
+    ]
+    assert select_afroxlmr_paths(paths) == [
+        "afroxlmr/model.pt",
+        "afroxlmr/tokenizer.json",
+        "afroxlmr/tokenizer_config.json",
+        "afroxlmr/config.json",
+        "Drive folder/afroxlmr/special_tokens_map.json",
+    ]
+    model, others = plan_afroxlmr_downloads(
+        [("tmp", paths[0]), ("rep", paths[1]), ("model", paths[3]), ("tok", paths[4])],
+        "afroxlmr/model.pt",
+    )
+    assert model == ("model", "model.pt")
+    assert others == [("tok", "tokenizer.json")]
+
+
+def test_folder_listing_downloads_only_afroxlmr_files(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = b"checkpoint-bytes"
+    files = [
+        ("tmp", "last.pt.tmp"),
+        ("report", "reports/results.md"),
+        ("model", "afroxlmr/model.pt"),
+        ("tok", "afroxlmr/tokenizer.json"),
+        ("cfg", "afroxlmr/config.json"),
+    ]
+    fetched = _patch_listing(
+        monkeypatch,
+        files,
+        {"model": payload, "tok": b"tokenizer", "cfg": b"config"},
+    )
+    sha = tmp_path / "weights.sha256"
+    sha.write_text(f"{_sha(payload)}  model.pt\n", encoding="utf-8")
+    out = tmp_path / "out"
+    main(["--url", DRIVE_FOLDER, "--sha256", str(sha), "--out", str(out)])
+    assert fetched == ["model", "tok", "cfg"]
+    assert (out / "model.pt").read_bytes() == payload
+    assert (out / "tokenizer.json").read_bytes() == b"tokenizer"
+    assert (out / "config.json").read_bytes() == b"config"
+    assert not (out / "last.pt.tmp").exists()
+    assert not (out / "reports").exists()
+
+
 def test_folder_url_keeps_the_matching_member(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     payload = b"checkpoint-bytes"
-
-    def fake_folder(url: str, output: Path) -> None:
-        assert "folders" in url
-        _stage_folder(output / "Shared folder", payload)
-
-    monkeypatch.setattr("capstone.weights._gdown_folder", fake_folder)
+    _patch_listing(
+        monkeypatch,
+        [("model", "Shared folder/afroxlmr/model.pt")],
+        {"model": payload},
+    )
     sha = tmp_path / "weights.sha256"
     sha.write_text(f"{_sha(payload)}  model.pt\n", encoding="utf-8")
     out = tmp_path / "out"
     main(["--url", DRIVE_FOLDER, "--sha256", str(sha), "--out", str(out)])
     assert (out / "model.pt").read_bytes() == payload
     assert not (out / ".partial-download").exists()
-    assert not (out / ".drive-folder").exists()
+
+
+def test_matching_checkpoint_skips_the_download(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = b"already-there"
+    out = tmp_path / "out"
+    out.mkdir()
+    (out / "model.pt").write_bytes(payload)
+
+    def fail_if_called(url: str) -> list[tuple[str, str]]:
+        raise AssertionError(url)
+
+    monkeypatch.setattr("capstone.weights._list_drive_files", fail_if_called)
+    sha = tmp_path / "weights.sha256"
+    sha.write_text(f"{_sha(payload)}  model.pt\n", encoding="utf-8")
+    main(["--url", DRIVE_FOLDER, "--sha256", str(sha), "--out", str(out)])
+    assert (out / "model.pt").read_bytes() == payload
 
 
 def test_folder_url_rejects_a_bad_digest(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    def fake_folder(url: str, output: Path) -> None:
-        _stage_folder(output, b"not-the-checkpoint")
-
-    monkeypatch.setattr("capstone.weights._gdown_folder", fake_folder)
+    _patch_listing(
+        monkeypatch,
+        [("model", "afroxlmr/model.pt")],
+        {"model": b"not-the-checkpoint"},
+    )
     sha = tmp_path / "weights.sha256"
     sha.write_text(f"{'ab' * 32}  model.pt\n", encoding="utf-8")
     out = tmp_path / "out"
@@ -210,17 +304,16 @@ def test_folder_url_rejects_a_bad_digest(
     assert exc.value.code == 1
     assert "mismatch" in capsys.readouterr().err.lower()
     assert not (out / "model.pt").exists()
-    assert not (out / ".drive-folder").exists()
 
 
 def test_folder_url_fails_when_the_member_is_missing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    def fake_folder(url: str, output: Path) -> None:
-        output.mkdir(parents=True, exist_ok=True)
-        (output / "readme.txt").write_text("no weights", encoding="utf-8")
-
-    monkeypatch.setattr("capstone.weights._gdown_folder", fake_folder)
+    _patch_listing(
+        monkeypatch,
+        [("tmp", "last.pt.tmp"), ("report", "reports/results.md")],
+        {},
+    )
     sha = tmp_path / "weights.sha256"
     sha.write_text(f"{'ab' * 32}  model.pt\n", encoding="utf-8")
     out = tmp_path / "out"

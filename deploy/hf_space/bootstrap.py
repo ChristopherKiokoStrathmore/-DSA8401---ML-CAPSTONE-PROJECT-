@@ -90,15 +90,13 @@ def harness(transformer: Path) -> None:
 def main() -> None:
     transformer = cache_dir()
     transformer.mkdir(parents=True, exist_ok=True)
-    model = transformer / "model.pt"
-    if not model.is_file():
-        completed = subprocess.run(
-            [sys.executable, "/app/scripts/download_weights.py", "--out", str(transformer)],
-            check=False,
-        )
-        if completed.returncode != 0 or not model.is_file():
-            harness(transformer)
-            return
+    completed = subprocess.run(
+        [sys.executable, "/app/scripts/download_weights.py", "--out", str(transformer)],
+        check=False,
+    )
+    if completed.returncode != 0 or not (transformer / "model.pt").is_file():
+        harness(transformer)
+        return
     sidecars(transformer)
     write_env("transformer", Path("/tmp/tfidf-harness"), transformer)
     print(f"weights ready at {transformer}", file=sys.stderr)

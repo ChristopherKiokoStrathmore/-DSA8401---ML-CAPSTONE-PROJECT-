@@ -8,7 +8,7 @@ Real customer text is not in this repository. It stays in git-ignored `data/priv
 
 ## Setup
 
-Python 3.11 or newer. From the repo root:
+Python 3.11 or 3.12 for the pinned `torch==2.5.1` in `requirements.txt`, which is what the Docker image and the Colab T4 run use. Python 3.13 can still `pip install -e .` because `pyproject.toml` allows `torch>=2.5.1`. From the repo root:
 
 ```bash
 make install
@@ -91,7 +91,7 @@ curl -s -X POST http://127.0.0.1:8000/predict \
   -d '{"text":"My line has been down since morning, please help"}'
 ```
 
-The image is Python slim, installs a CPU torch wheel, and runs uvicorn as a non-root user. `MODEL_BACKEND` defaults to `tfidf`. `HEALTHCHECK` calls `/health`. If the TF-IDF directory is empty at start, the entrypoint trains the synthetic fixture so the container can answer. Mount the real `artifacts/tfidf` directory to serve those pipelines instead.
+The image is Python 3.12 slim. It installs `torch==2.5.1+cpu` from the CPU index, then `pip install --no-deps .` so that step does not replace it with the CUDA wheel. uvicorn listens on `0.0.0.0:$PORT` (`PORT` defaults to 8000). `MODEL_BACKEND` defaults to `tfidf`. `HEALTHCHECK` calls `/health`. If the TF-IDF directory is empty at start, the entrypoint trains the synthetic fixture so the container can answer. Mount the real `artifacts/tfidf` directory to serve those pipelines instead. With `MODEL_BACKEND=transformer`, the entrypoint runs `scripts/download_weights.py` into `WEIGHTS_DIR` unless `model.pt` already matches the SHA-256.
 
 The same image serves the transformer when the checkpoint is mounted at `/app/artifacts/transformer/model.pt`:
 
@@ -115,7 +115,7 @@ https://drive.google.com/drive/folders/1Ql5b645nf9j_UhWygj7kYqH0jaWZsDl9?usp=sha
 python scripts/download_weights.py
 ```
 
-A folder link is downloaded with gdown and only `afroxlmr/model.pt` is kept. A file link still works (`AFROXLMR_WEIGHTS_URL` or `WEIGHTS_URL`). Any other URL uses urllib. The script checks the file against the SHA-256 and deletes a mismatch. A placeholder URL is refused before any download. Training also writes `artifacts/afroxlmr/sha256.txt` for the state dict it just saved.
+The script lists the Drive folder and downloads only `afroxlmr/` (`model.pt` and the tokenizer files). It does not pull `last.pt.tmp` or `reports/`. A file that already matches the SHA-256 is left in place. A file link still works (`AFROXLMR_WEIGHTS_URL` or `WEIGHTS_URL`). Any other URL uses urllib. A mismatch deletes the partial file and exits 1. `WEIGHTS_DIR` overrides the output directory (default `artifacts/transformer`). Training also writes `artifacts/afroxlmr/sha256.txt` for the state dict it just saved.
 
 ## Layout
 
@@ -139,7 +139,8 @@ report/report.pdf               the capstone report
 report/latex/main.tex           LaTeX source for that PDF
 submission/DSA8401_submission.pdf one-page cover
 frontend/                       Next.js demo (MULTI-HEAD), calls this API
-deploy/hf_space/                Hugging Face Docker Space, deploy not run
+railway.json                    Railway Dockerfile service
+deploy/hf_space/                optional Hugging Face Space (Docker SDK needs PRO)
 colab/retrain_drive.ipynb       T4 retrain with Drive resume, no stored outputs
 data/sample/                    fictional workbook and labels, seed 42
 data/private/                   git-ignored real data
@@ -159,4 +160,8 @@ Do not commit `.xlsx`, `.csv`, or `.parquet` outside `data/sample/`. Do not comm
 
 The browser UI is `frontend/`, copied from [MULTI-HEAD-](https://github.com/ChristopherKiokoStrathmore/MULTI-HEAD-). `NEXT_PUBLIC_API_URL` is the FastAPI base URL. The page calls `/health`, `/predict`, and `/predict_batch`. The JSON shapes match `lib/types.ts` and `src/capstone/serving/schemas.py`.
 
-`deploy/hf_space/` is a Hugging Face Docker Space (free CPU basic, port 7860) for that API, at `Kioko1/airtel-multihead`. On start it runs `scripts/download_weights.py`, checks the SHA-256, and stores the checkpoint under `/data` when that directory is writable, otherwise under `/tmp`. The checkpoint file is 1.1 GB and the server is one CPU process, which fits the 16 GB Space. The Space itself is NOT VERIFIED (this checkout does not upload it). The cover still says `LIVE_DEMO_URL`. Commands are in `deploy/README.md`. `make hf-space` needs only `pip install huggingface_hub` and `HF_TOKEN`.
+Hosting is Railway Hobby. `railway.json` builds the root `Dockerfile`, checks `/health` (15 minute timeout, so the first-start download can finish), and restarts on failure. Add a volume at `/data`, set `MODEL_BACKEND=transformer`, `WEIGHTS_DIR=/data`, and `CORS_ORIGINS`, then generate a domain. The process needs about 3 GB of RAM. The checkpoint is 1.1 GB. Steps are in `deploy/README.md`. The cover still says `LIVE_DEMO_URL` until that domain exists.
+
+The frontend stays on Vercel with root `frontend` and `NEXT_PUBLIC_API_URL` set to the Railway URL, or as a second Railway service with the same root directory.
+
+A Hugging Face Docker Space (`deploy/hf_space/`, `Kioko1/airtel-multihead`) is optional. Free Docker Spaces return HTTP 402 and need a PRO plan. `make hf-space` is unchanged.

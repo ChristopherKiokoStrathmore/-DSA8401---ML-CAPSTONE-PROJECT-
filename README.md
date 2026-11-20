@@ -22,7 +22,7 @@ flowchart LR
   compose["docker-compose local"] -->|"same API, port 8000"| railway
 ```
 
-Railway API: https://api-production-09d942cd.up.railway.app. Volume `/data`, `MODEL_BACKEND=transformer`, `WEIGHTS_DIR=/data`. Frontend: https://dsa-8401-ml-capstone-project.vercel.app/.
+API docs (Swagger): https://api-production-09d942cd.up.railway.app/docs. Health: https://api-production-09d942cd.up.railway.app/health. Volume `/data`, `MODEL_BACKEND=transformer`, `WEIGHTS_DIR=/data`. Frontend: https://dsa-8401-ml-capstone-project.vercel.app/.
 
 Real customer text is not in this repository. It stays in git-ignored `data/private/`. Clearance status: cleared for coursework. The write-up is [`report/report.pdf`](report/report.pdf) (LaTeX source in [`report/latex/main.tex`](report/latex/main.tex); the markdown twin is `report/report.md`). The one-page cover is [`submission/DSA8401_submission.pdf`](submission/DSA8401_submission.pdf). Technique choices are in `docs/technique_justification.md`. Who labelled what, and which tools wrote code, is in `AI_USE.md`.
 
@@ -180,7 +180,7 @@ Do not commit `.xlsx`, `.csv`, or `.parquet` outside `data/sample/`. Do not comm
 
 The browser UI is `frontend/`, copied from [MULTI-HEAD-](https://github.com/ChristopherKiokoStrathmore/MULTI-HEAD-). `NEXT_PUBLIC_API_URL` is the FastAPI base URL. The page calls `/health`, `/predict`, and `/predict_batch`. The JSON shapes match `lib/types.ts` and `src/capstone/serving/schemas.py`.
 
-The live frontend is https://dsa-8401-ml-capstone-project.vercel.app/ and the API is https://api-production-09d942cd.up.railway.app.
+The live frontend is https://dsa-8401-ml-capstone-project.vercel.app/. API docs (Swagger): https://api-production-09d942cd.up.railway.app/docs. Health: https://api-production-09d942cd.up.railway.app/health.
 
 Hosting is Railway Hobby. `railway.json` builds the root `Dockerfile`, checks `/health` (15 minute timeout, so the first-start download can finish), and restarts on failure. The service has a volume at `/data`, `MODEL_BACKEND=transformer`, `WEIGHTS_DIR=/data`, and `CORS_ORIGINS` (the default `*` already allows https://dsa-8401-ml-capstone-project.vercel.app). The process needs about 3 GB of RAM. The checkpoint is 1.1 GB. Steps are in `deploy/README.md`.
 

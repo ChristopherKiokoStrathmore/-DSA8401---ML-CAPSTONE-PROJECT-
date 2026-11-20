@@ -38,6 +38,12 @@ Platform sentiment versus hand sentiment, recomputed: agreement 0.711 and kappa 
 
 Exact overlaps, recomputed: 9 urgency-test messages also sit in the issue/sentiment 1,500, 23 sit in the Gemini file, and 0 sit in the urgency training file. Gold, including near-duplicates, is removed from every training and validation pool. Splits are grouped on `dup_group_id`, seed 42.
 
+## Deployed architecture
+
+Raw workbook to PII mask, grouped splits, and gold-overlap exclusion. TF-IDF logistic regression is the CPU baseline. AfroXLMR-base (bottom 8 of 12 frozen, issue, sentiment, and CORN urgency) was trained on Chris's Colab T4. The checkpoint is on Google Drive and checked by SHA-256 into the Railway volume at `/data`. FastAPI (`/health`, `/predict`, `/predict_batch`) runs in Docker at https://api-production-09d942cd.up.railway.app and auto-deploys from `main`. The Next.js app at https://dsa-8401-ml-capstone-project.vercel.app/ uses `NEXT_PUBLIC_API_URL`. GitHub Actions runs lint and pytest. `docker-compose` is the local path on port 8000.
+
+![Deployed architecture](latex/figures/architecture-deployed.png)
+
 ## Pipeline
 
 `prepare_data.py` reads the workbook once, checks the required columns, writes parquet under `data/private/`, and writes an aggregate audit with no message text. Inclusion drops empty text, text with no letters, and auto receipts. Exact duplicates and near-duplicates share `dup_group_id` (character 3-gram MinHash, Dice at least 0.80).

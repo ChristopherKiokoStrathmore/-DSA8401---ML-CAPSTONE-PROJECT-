@@ -4,6 +4,27 @@ Three decisions for one customer message: the issue (10 classes), the sentiment 
 
 ![End-to-end architecture: data pipeline, modelling, and the Docker API](docs/architecture.png)
 
+## Architecture
+
+What is deployed now. The figure above is the training pipeline. The diagram below is the live path, including local Compose and CI.
+
+```mermaid
+flowchart TD
+  raw["Raw workbook, git-ignored"] --> mask["PII mask: PHONE, URL, USER, ID"]
+  mask --> splits["Grouped splits, seed 42"]
+  splits --> gold["Gold-overlap exclusion from train and val"]
+  gold --> tfidf["TF-IDF logistic regression, CPU baseline"]
+  gold --> t4["AfroXLMR-base on Chris's T4: bottom 8 of 12 frozen, issue, sentiment, CORN urgency"]
+  t4 --> drive["Google Drive afroxlmr/, SHA-256 checked"]
+  drive --> api["FastAPI Docker on Railway: /health, /predict, /predict_batch"]
+  api --> web["Next.js on Vercel, NEXT_PUBLIC_API_URL"]
+  ci["GitHub Actions: lint and pytest"] --> main["GitHub main, auto-deploy"]
+  main --> api
+  compose["docker-compose local, PORT 8000"] --> api
+```
+
+Railway API: https://api-production-09d942cd.up.railway.app. Volume `/data`, `MODEL_BACKEND=transformer`, `WEIGHTS_DIR=/data`. Frontend: https://dsa-8401-ml-capstone-project.vercel.app/.
+
 Real customer text is not in this repository. It stays in git-ignored `data/private/`. Clearance status: cleared for coursework. The write-up is [`report/report.pdf`](report/report.pdf) (LaTeX source in [`report/latex/main.tex`](report/latex/main.tex); the markdown twin is `report/report.md`). The one-page cover is [`submission/DSA8401_submission.pdf`](submission/DSA8401_submission.pdf). Technique choices are in `docs/technique_justification.md`. Who labelled what, and which tools wrote code, is in `AI_USE.md`.
 
 ## Setup

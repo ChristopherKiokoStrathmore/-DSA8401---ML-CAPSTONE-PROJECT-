@@ -131,8 +131,15 @@ Real data stays in git-ignored \texttt{data/\allowbreak{}private/\allowbreak{}}.
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{architecture.png}
-\caption{End-to-end architecture of the data pipeline, models, evaluation, and Docker serving path (\texttt{docs/\allowbreak{}architecture.png}).}
+\caption{Training pipeline: data, models, evaluation, and the Docker API (\texttt{docs/\allowbreak{}architecture.png}).}
 \label{fig:architecture}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{architecture-deployed.png}
+\caption{Deployed path. Raw text is masked, split, and stripped of gold overlap. TF-IDF stays the CPU baseline. AfroXLMR-base (bottom 8 of 12 frozen, three heads, CORN urgency) was trained on one Colab T4. Weights sit on Google Drive and are SHA-256 checked into the Railway volume at \texttt{/data}. FastAPI (\texttt{/health}, \texttt{/predict}, \texttt{/predict\_batch}) is the Docker service at \url{https://api-production-09d942cd.up.railway.app}, auto-deployed from \texttt{main}. The Next.js app at \url{https://dsa-8401-ml-capstone-project.vercel.app/} calls it through \texttt{NEXT\_PUBLIC\_API\_URL}. GitHub Actions runs lint and pytest. \texttt{docker-compose} is the local path on port 8000.}
+\label{fig:deployed}
 \end{figure}
 
 \section{Models}

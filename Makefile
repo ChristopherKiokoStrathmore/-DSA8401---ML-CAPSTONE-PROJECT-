@@ -2,7 +2,7 @@ PYTHON ?= python3
 VENV ?= .venv
 BIN := $(VENV)/bin
 
-.PHONY: install lint test smoke data labels train-baselines train-transformer evaluate real serve-smoke
+.PHONY: install lint test smoke data labels train-baselines train-transformer evaluate real serve-smoke hf-space
 
 CONFIG ?= configs/afroxlmr.yaml
 MANIFESTS ?= data/private/manifests
@@ -83,3 +83,6 @@ real:
 
 serve-smoke:
 	SERVE_PORT=$(SERVE_PORT) BIN=$(BIN) bash scripts/serve_smoke.sh
+
+hf-space:
+	$(PYTHON) scripts/push_hf_space.py

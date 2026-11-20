@@ -45,12 +45,14 @@ class Settings:
         backend = os.environ.get("MODEL_BACKEND", "tfidf").strip().lower() or "tfidf"
         origins_raw = os.environ.get("CORS_ORIGINS")
         if origins_raw is None or origins_raw.strip() == "":
-            origins = DEFAULT_CORS_ORIGINS
+            origins = ("*",)
         else:
             origins = tuple(part.strip() for part in origins_raw.split(",") if part.strip())
         if "CORS_ORIGIN_REGEX" in os.environ:
             regex_raw = os.environ["CORS_ORIGIN_REGEX"].strip()
             regex: str | None = regex_raw or None
+        elif origins == ("*",):
+            regex = None
         else:
             regex = DEFAULT_CORS_ORIGIN_REGEX
         return cls(

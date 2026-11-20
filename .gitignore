@@ -17,6 +17,7 @@ artifacts/**
 
 # secrets and environments
 .env*
+!frontend/.env.example
 
 # python
 __pycache__/

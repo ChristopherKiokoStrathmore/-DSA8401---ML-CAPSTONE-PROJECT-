@@ -222,6 +222,14 @@ def test_missing_tfidf_and_unknown_backend_are_503(tmp_path: Path) -> None:
     assert "MODEL_BACKEND" in response.json()["error"]
 
 
+def test_from_env_cors_defaults_to_any_origin(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("CORS_ORIGINS", raising=False)
+    monkeypatch.delenv("CORS_ORIGIN_REGEX", raising=False)
+    settings = Settings.from_env()
+    assert settings.cors_origins == ("*",)
+    assert settings.cors_origin_regex is None
+
+
 def test_cors_allows_the_next_app_and_local_dev(client: TestClient) -> None:
     origins = [
         "https://multi-head.vercel.app",

@@ -4,7 +4,7 @@ Three decisions for one customer message: the issue (10 classes), the sentiment 
 
 ![End-to-end architecture: data pipeline, modelling, and the Docker API](docs/architecture.png)
 
-Real customer text is not in this repository. It stays in git-ignored `data/private/`. Clearance status: cleared for coursework. The write-up is `report/report.md`. Technique choices are in `docs/technique_justification.md`. Who labelled what, and which tools wrote code, is in `AI_USE.md`.
+Real customer text is not in this repository. It stays in git-ignored `data/private/`. Clearance status: cleared for coursework. The write-up is [`report/report.pdf`](report/report.pdf) (LaTeX source in [`report/latex/main.tex`](report/latex/main.tex); the markdown twin is `report/report.md`). The one-page cover is [`submission/DSA8401_submission.pdf`](submission/DSA8401_submission.pdf). Technique choices are in `docs/technique_justification.md`. Who labelled what, and which tools wrote code, is in `AI_USE.md`.
 
 ## Setup
 
@@ -79,7 +79,7 @@ curl -s -X POST http://127.0.0.1:8000/predict_batch \
 
 Every input goes through `mask_pii` before the model sees it. The same function masks training text. Logs record counts and lengths, not the message. Text longer than `MAX_TEXT_CHARS` (default 4000) or a batch larger than `MAX_BATCH_SIZE` (default 32) is HTTP 422, and the body does not echo the message.
 
-CORS allows `https://multi-head.vercel.app`, any `https://*.vercel.app` origin, and local `http://localhost` or `http://127.0.0.1` on any port.
+`CORS_ORIGINS` is a comma-separated list. When it is unset, the API allows every origin (`*`). Set `CORS_ORIGIN_REGEX` only when you want an extra pattern on top of an explicit list.
 
 ## Docker
 
@@ -135,7 +135,11 @@ reports/figures/                AfroXLMR confusion matrices and the learning cur
 reports/afroxlmr_run/           curves.json and threshold.json from the T4 run
 docs/label_rubric.md            classes, provenance, recomputed agreement
 docs/technique_justification.md one row per syllabus area
-report/report.md                the capstone report
+report/report.pdf               the capstone report
+report/latex/main.tex           LaTeX source for that PDF
+submission/DSA8401_submission.pdf one-page cover
+frontend/                       Next.js demo (MULTI-HEAD), calls this API
+deploy/hf_space/                Hugging Face Docker Space, deploy not run
 colab/retrain_drive.ipynb       T4 retrain with Drive resume, no stored outputs
 data/sample/                    fictional workbook and labels, seed 42
 data/private/                   git-ignored real data
@@ -150,3 +154,9 @@ Near-duplicates use character 3-gram MinHash (32 permutations, 8 bands of 4, see
 The emergency threshold is chosen on the urgency validation split only: maximise recall subject to a false-emergency rate of at most 0.20, then apply it once to test. `evaluate.py` skips a model whose artefact is missing and records `not evaluated` in `results.json`. Mistakes go to `data/private/errors.csv` with a category hint. Thirty are marked for the taxonomy. That file is git-ignored.
 
 Do not commit `.xlsx`, `.csv`, or `.parquet` outside `data/sample/`. Do not commit `.env*`, `__pycache__/`, `node_modules/`, `.next/`, or model weights.
+
+## Live demo / deployment
+
+The browser UI is `frontend/`, copied from [MULTI-HEAD-](https://github.com/ChristopherKiokoStrathmore/MULTI-HEAD-). `NEXT_PUBLIC_API_URL` is the FastAPI base URL. The page calls `/health`, `/predict`, and `/predict_batch`. The JSON shapes match `lib/types.ts` and `src/capstone/serving/schemas.py`.
+
+`deploy/hf_space/` is a Hugging Face Docker Space (free CPU basic, port 7860) for that API, at `Kioko1/airtel-multihead`. On start it runs `scripts/download_weights.py`, checks the SHA-256, and stores the checkpoint under `/data` when that directory is writable, otherwise under `/tmp`. The checkpoint file is 1.1 GB and the server is one CPU process, which fits the 16 GB Space. The Space itself is NOT VERIFIED (this checkout does not upload it). The cover still says `LIVE_DEMO_URL`. Commands are in `deploy/README.md`. `make hf-space` needs only `pip install huggingface_hub` and `HF_TOKEN`.

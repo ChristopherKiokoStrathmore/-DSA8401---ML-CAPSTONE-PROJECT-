@@ -324,6 +324,33 @@ def test_folder_url_fails_when_the_member_is_missing(
     assert not (out / "model.pt").exists()
 
 
+def test_per_file_download_matches_installed_gdown(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import inspect
+    from unittest.mock import create_autospec
+
+    import gdown
+
+    from capstone.weights import _download_drive_file
+
+    signature = inspect.signature(gdown.download)
+    signature.bind(id="abc123", output="model.pt", quiet=False)
+    dest = tmp_path / "model.pt"
+    fake = create_autospec(gdown.download)
+
+    def write_file(*args: object, **kwargs: object) -> str:
+        signature.bind(*args, **kwargs)
+        dest.write_bytes(b"ok")
+        return str(dest)
+
+    fake.side_effect = write_file
+    monkeypatch.setattr(gdown, "download", fake)
+    _download_drive_file("abc123", dest)
+    fake.assert_called_once_with(id="abc123", output=str(dest), quiet=False)
+    assert "fuzzy" not in fake.call_args.kwargs
+
+
 def test_unsafe_filename_is_rejected(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     sha = tmp_path / "weights.sha256"
     sha.write_text(f"{'ab' * 32}  ../escape.pt\n", encoding="utf-8")

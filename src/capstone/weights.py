@@ -251,7 +251,7 @@ def download(url: str, dest: Path, *, member: str = _DEFAULT_MEMBER) -> None:
                 "gdown is required to download a Google Drive link. Install the package and retry."
             )
         try:
-            result = gdown.download(url, output=str(dest), quiet=False, fuzzy=True)
+            result = gdown.download(url=url, output=str(dest), quiet=False)
         except Exception as exc:
             dest.unlink(missing_ok=True)
             fail(f"gdown failed for {display_url(url)}: {type(exc).__name__}: {exc}")
@@ -389,12 +389,7 @@ def _download_drive_file(file_id: str, dest: Path) -> None:
         fail("gdown is required to download a Google Drive file. Install the package and retry.")
     dest.parent.mkdir(parents=True, exist_ok=True)
     try:
-        result = gdown.download(
-            url="https://drive.google.com/uc?id=" + file_id,
-            output=str(dest),
-            quiet=True,
-            fuzzy=True,
-        )
+        result = gdown.download(id=file_id, output=str(dest), quiet=False)
     except Exception as exc:
         dest.unlink(missing_ok=True)
         fail(f"gdown failed for file {file_id}: {type(exc).__name__}: {exc}")

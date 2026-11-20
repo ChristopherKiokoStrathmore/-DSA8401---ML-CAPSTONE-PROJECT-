@@ -9,18 +9,17 @@ Three decisions for one customer message: the issue (10 classes), the sentiment 
 What is deployed now. The figure above is the training pipeline. The diagram below is the live path, including local Compose and CI.
 
 ```mermaid
-flowchart TD
-  raw["Raw workbook, git-ignored"] --> mask["PII mask: PHONE, URL, USER, ID"]
-  mask --> splits["Grouped splits, seed 42"]
-  splits --> gold["Gold-overlap exclusion from train and val"]
-  gold --> tfidf["TF-IDF logistic regression, CPU baseline"]
-  gold --> t4["AfroXLMR-base on Chris's T4: bottom 8 of 12 frozen, issue, sentiment, CORN urgency"]
-  t4 --> drive["Google Drive afroxlmr/, SHA-256 checked"]
-  drive --> api["FastAPI Docker on Railway: /health, /predict, /predict_batch"]
-  api --> web["Next.js on Vercel, NEXT_PUBLIC_API_URL"]
-  ci["GitHub Actions: lint and pytest"] --> main["GitHub main, auto-deploy"]
-  main --> api
-  compose["docker-compose local, PORT 8000"] --> api
+flowchart LR
+  browser["Browser"] -->|"opens the page"| vercel["Vercel: Next.js frontend"]
+  vercel -->|"GET /health, POST /predict, POST /predict_batch (CORS)"| railway["Railway: Docker FastAPI, /data volume"]
+  railway -->|"startup: download afroxlmr/ and SHA-256 check"| drive["Google Drive: weights"]
+  gh["GitHub: repo and Actions CI"] -->|"auto-deploy main"| railway
+  gh -->|"auto-deploy main"| vercel
+  raw["Raw workbook"] --> mask["PII mask"] --> splits["Splits and gold-overlap exclusion"]
+  splits --> tfidf["TF-IDF baseline, CPU"]
+  splits --> t4["AfroXLMR-base, T4, 8/12 frozen, CORN"]
+  t4 --> drive
+  compose["docker-compose local"] -->|"same API, port 8000"| railway
 ```
 
 Railway API: https://api-production-09d942cd.up.railway.app. Volume `/data`, `MODEL_BACKEND=transformer`, `WEIGHTS_DIR=/data`. Frontend: https://dsa-8401-ml-capstone-project.vercel.app/.
